@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +18,13 @@ import com.anychart.charts.CircularGauge;
 import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -26,9 +34,9 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
-    private static int anxietyLvl, gsr, skt, hr, hrv;
-    private static List<Integer> nums,gsrTotal,hrTotal,hrvTotal,sktTotal;
-    private static Button startBtn, backBtn, btBtn;
+    private static int anxietyLvl, gsr, skt, hr, hrv, linesNum;
+    private static List<Integer> nums,gsrTotal,hrTotal,hrvTotal,sktTotal, gsrAll, sktAll, hrAll, hrvAll;
+    private static Button startBtn, backBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
     private static boolean isRunning, isBtOn;
     private static AnyChartView anyChartView;
     private static CircularGauge circularGauge;
@@ -36,8 +44,10 @@ public class MainActivity extends AppCompatActivity {
     private static TextView gsrText, sktText, hrText, hrvText;
     private static int btDuration, counter;
     private static Context context;
-    private static String btText;
+    private static String btText, text;
     private static Toast btToast;
+    private static ArrayList<String> statusAll;
+    private static BufferedReader reader;
 
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -45,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialize();
+        setTextValues();
         createBtToast();
         createChart();
     }
@@ -68,10 +79,15 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     anxietyLvl = r.nextInt(100);
-                    gsr = r.nextInt(100);
-                    skt = r.nextInt(100);
-                    hr = r.nextInt(100);
-                    hrv = r.nextInt(100);
+//                    gsr = r.nextInt(100);
+//                    skt = r.nextInt(100);
+//                    hr = r.nextInt(100);
+//                    hrv = r.nextInt(100);
+
+                    gsr = gsrAll.get(counter);
+                    skt = sktAll.get(counter);
+                    hr = hrAll.get(counter);
+                    hrv = hrvAll.get(counter);
 
                     nums.add(anxietyLvl);
                     gsrTotal.add(gsr);
@@ -101,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         }else{
             isRunning = false;
             startBtn.setText("Start");
-            //ResultsActivity ra = new ResultsActivity(getGsr(),getSkt(),getHr(),getHrv(),getTotalScore());
             startActivity(new Intent(MainActivity.this, ResultsActivity.class));
         }
     }
@@ -113,9 +128,17 @@ public class MainActivity extends AppCompatActivity {
             isBtOn =false;
             isRunning = false;
             startBtn.setText("Start");
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
         }else{
             btBtn.setBackgroundResource(R.drawable.bluetooth_icon);
             isBtOn =true;
+            gsrDot.setBackgroundResource(R.drawable.dot_green);
+            sktDot.setBackgroundResource(R.drawable.dot_green);
+            hrDot.setBackgroundResource(R.drawable.dot_green);
+            hrvDot.setBackgroundResource(R.drawable.dot_green);
         }
 
     }
@@ -124,44 +147,40 @@ public class MainActivity extends AppCompatActivity {
         return nums;
     }
 
-    public static double getGsr(){
-        int sum = 0;
-        for(int i=0;i<gsrTotal.size();i++){
-            sum+= gsrTotal.get(i);
-        }
-        return sum/counter;
-    }
+//    public static double getAvg(String val){
+//        int sum=0;
+//        avg = new ArrayList<Integer>();
+//        switch (val) {
+//            case "gsr":
+//                avg = new ArrayList<Integer>(gsrTotal);
+//            case "skt":
+//                avg =new ArrayList<Integer>(sktTotal);
+//            case "hr":
+//                avg =new ArrayList<Integer>(hrTotal);
+//            case "hrv":
+//                avg =new ArrayList<Integer>(hrvTotal);
+//            default:
+//                System.out.println("error");
+//        }
+//        for(int i=0;i<avg.size();i++){
+//            sum+= avg.get(i);
+//        }
+//        return sum/counter;
+//    }
 
-    public static double getSkt(){
-        int sum = 0;
-        for(int i=0;i<sktTotal.size();i++){
-            sum+= sktTotal.get(i);
-        }
-        return sum/counter;
-    }
-
-    public static double getHr(){
-        int sum = 0;
-        for(int i=0;i<hrTotal.size();i++){
-            sum+= hrTotal.get(i);
-        }
-        return sum/counter;
-    }
-
-    public static double getHrv(){
-        int sum = 0;
-        for(int i=0;i<hrvTotal.size();i++){
-            sum+= hrvTotal.get(i);
-        }
-        return sum/counter;
-    }
 
     private void initialize() {
 
+        gsrAll = new ArrayList<Integer>();
+        sktAll = new ArrayList<Integer>();
+        hrAll = new ArrayList<Integer>();
+        hrvAll = new ArrayList<Integer>();
+        statusAll = new ArrayList<String>();
         isBtOn = false;
         isRunning = false;
         r = new Random();
         counter = 0;
+        linesNum = 0;
 
         nums = new ArrayList<Integer>();
         gsrTotal = new ArrayList<Integer>();
@@ -172,6 +191,10 @@ public class MainActivity extends AppCompatActivity {
         startBtn = (Button) findViewById(R.id.startBtn);
         backBtn = (Button) findViewById(R.id.backBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
+        gsrDot = (Button) findViewById(R.id.gsrDot);
+        sktDot = (Button) findViewById(R.id.sktDot);
+        hrDot = (Button) findViewById(R.id.hrDot);
+        hrvDot = (Button) findViewById(R.id.hrvDot);
 
         gsrText = (TextView) findViewById(R.id.gsrTextView);
         sktText = (TextView) findViewById(R.id.sktTextView);
@@ -181,6 +204,27 @@ public class MainActivity extends AppCompatActivity {
         anyChartView = findViewById(R.id.any_chart_view);
         circularGauge = AnyChart.circular();
 
+
+    }
+
+    public void setTextValues(){
+        try{
+            final InputStream file = getAssets().open("demoValues.txt");
+            reader = new BufferedReader(new InputStreamReader(file));
+            String line = reader.readLine();
+            while(line != null){
+                linesNum++;
+                String[] data = line.split("\\s*,\\s*");
+                statusAll.add(data[0]);
+                gsrAll.add(Integer.parseInt(data[2]));
+                sktAll.add(Integer.parseInt(data[7]));
+                hrAll.add(Integer.parseInt(data[8]));
+                hrvAll.add(Integer.parseInt(data[9]));
+                line = reader.readLine();
+            }
+        } catch(IOException ioe){
+            ioe.printStackTrace();
+        }
     }
 
     public void createChart(){
@@ -302,4 +346,37 @@ public class MainActivity extends AppCompatActivity {
         btToast.setGravity(Gravity.CENTER, 0, 0);
 
     }
+
+    public static double getGsr(){
+        int sum = 0;
+        for(int i=0;i<gsrTotal.size();i++){
+            sum+= gsrTotal.get(i);
+        }
+        return sum/counter;
+    }
+
+    public static double getSkt(){
+        int sum = 0;
+        for(int i=0;i<sktTotal.size();i++){
+            sum+= sktTotal.get(i);
+        }
+        return sum/counter;
+    }
+
+    public static double getHr(){
+        int sum = 0;
+        for(int i=0;i<hrTotal.size();i++){
+            sum+= hrTotal.get(i);
+        }
+        return sum/counter;
+    }
+
+    public static double getHrv(){
+        int sum = 0;
+        for(int i=0;i<hrvTotal.size();i++){
+            sum+= hrvTotal.get(i);
+        }
+        return sum/counter;
+    }
+
 }

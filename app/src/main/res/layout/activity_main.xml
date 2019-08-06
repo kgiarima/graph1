@@ -22,7 +22,21 @@
             android:layout_weight="1"
             >
 
-            <TextView
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <Button
+                android:id="@+id/gsrDot"
+                android:background="@drawable/dot_red"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_weight="1"
+                android:layout_margin="5dp"
+                />
+
+                <TextView
                 android:id="@+id/gsrTextView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -32,15 +46,32 @@
                 android:gravity="center"
                 />
 
-            <TextView
-                android:id="@+id/sktTextView"
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="SKT"
-                android:gravity="center"
-                />
+                android:layout_weight="1">
+                <Button
+                    android:id="@+id/sktDot"
+                    android:background="@drawable/dot_red"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    />
+
+                <TextView
+                    android:id="@+id/sktTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:textSize="20sp"
+                    android:text="SKT"
+                    android:gravity="center"
+                    />
+            </RelativeLayout>
+
 
         </LinearLayout>
 
@@ -51,25 +82,52 @@
             android:layout_weight="1"
             >
 
-            <TextView
-                android:id="@+id/hrTextView"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="HR"
-                android:gravity="center"
-                />
+                android:layout_weight="1">
+                <Button
+                    android:id="@+id/hrDot"
+                    android:background="@drawable/dot_red"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    />
 
-            <TextView
-                android:id="@+id/hrvTextView"
+                <TextView
+                    android:id="@+id/hrTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:textSize="20sp"
+                    android:text="HR"
+                    android:gravity="center"
+                    />
+            </RelativeLayout>
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="HRV"
-                android:gravity="center"
-                />
+                android:layout_weight="1">
+                <Button
+                    android:id="@+id/hrvDot"
+                    android:background="@drawable/dot_red"
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    />
+
+                <TextView
+                    android:id="@+id/hrvTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:textSize="20sp"
+                    android:text="HRV"
+                    android:gravity="center"
+                    />
+            </RelativeLayout>
 
         </LinearLayout>
 

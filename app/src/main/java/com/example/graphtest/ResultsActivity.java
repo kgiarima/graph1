@@ -33,14 +33,6 @@ public class ResultsActivity extends AppCompatActivity {
     private static Cartesian cartesian;
     private static MainActivity mainData;
 
-//    public ResultsActivity(double gsr, double skt, double hr, double hrv, List<Integer> anxiety){
-//        this.gsr = gsr;
-//        this.skt = skt;
-//        this.hr = hr;
-//        this.hrv = hrv;
-//        this.anxiety = anxiety;
-//    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,10 +45,10 @@ public class ResultsActivity extends AppCompatActivity {
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
         mainData = new MainActivity();
-        gsr = mainData.getGsr();
-        skt = mainData.getSkt();
-        hr = mainData.getHr();
-        hrv = mainData.getHrv();
+        gsr = mainData.getGsr(); //Avg("gsr");
+        skt = mainData.getSkt(); //Avg("skt");
+        hr = mainData.getHr(); //Avg("hr");
+        hrv = mainData.getHrv(); //Avg("hrv");
         anxiety = mainData.getTotalScore();
 
         gsrText.setText("GSR : "+gsr);
