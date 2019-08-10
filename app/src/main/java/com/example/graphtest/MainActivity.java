@@ -98,17 +98,26 @@ public class MainActivity extends AppCompatActivity {
 
                     currentValue = anxietyLvl;
 
+                    circularGauge.autoRedraw();//***check
                     circularGauge.label(1)
                             .text("<span style=\"font-size: 20\">" + currentValue + "</span>") //currentValue should be Anxiety Level
                             .useHtml(true)
                             .hAlign(HAlign.CENTER);
 
                     circularGauge.data(new SingleValueDataSet(new Double[]{currentValue}));
+                    circularGauge.autoRedraw();//***check
 
                     gsrText.setText("GSR : " + gsr);
                     sktText.setText("SKT : " + skt);
                     hrText.setText("HR : " + hr);
                     hrvText.setText("HRV : " + hrv);
+
+                    if(counter==linesNum){
+                        isRunning = false;
+                        startBtn.setText("Start");
+                        t.cancel();
+                        startActivity(new Intent(MainActivity.this, ResultsActivity.class));
+                    }
 
                 }
             }, 0, 1000);
@@ -144,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static List<Integer> getTotalScore(){
+
         return nums;
     }
 

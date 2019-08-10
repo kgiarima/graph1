@@ -45,6 +45,7 @@ public class ResultsActivity extends AppCompatActivity {
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
         mainData = new MainActivity();
+
         gsr = mainData.getGsr(); //Avg("gsr");
         skt = mainData.getSkt(); //Avg("skt");
         hr = mainData.getHr(); //Avg("hr");
