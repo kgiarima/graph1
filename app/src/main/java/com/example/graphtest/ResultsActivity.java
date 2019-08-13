@@ -26,7 +26,7 @@ import java.util.List;
 public class ResultsActivity extends AppCompatActivity {
 
     private static double gsr, skt, hr, hrv;
-    private static List<Integer> anxiety;
+    private static List<Integer> anxiety, gsrAll, sktAll, hrAll, hrvAll;
     private static Button backBtn;
     private static AnyChartView anyChartView;
     private static TextView gsrText, sktText, hrText, hrvText;
@@ -50,7 +50,12 @@ public class ResultsActivity extends AppCompatActivity {
         skt = mainData.getSkt(); //Avg("skt");
         hr = mainData.getHr(); //Avg("hr");
         hrv = mainData.getHrv(); //Avg("hrv");
+
         anxiety = mainData.getTotalScore();
+        gsrAll = mainData.getTotalGsr();
+        sktAll = mainData.getTotalSkt();
+        hrAll = mainData.getTotalHr();
+        hrvAll = mainData.getTotalHrv();
 
         gsrText.setText("GSR : "+gsr);
         sktText.setText("SKT : "+skt);
@@ -59,10 +64,34 @@ public class ResultsActivity extends AppCompatActivity {
 
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
-        setGraph();
+
+        setGraph("anxiety");
     }
 
-    public void setGraph(){
+    public void setGraph(String choice){
+
+        List<Integer> graph;
+        String title = "";
+
+        if(choice.equals("anxiety")){
+            graph = anxiety;
+            title = "Anxiety Level";
+        }else if(choice.equals("gsr")){
+            graph = gsrAll;
+            title = "GSR Level";
+        }else if(choice.equals("skt")){
+            graph = sktAll;
+            title = "SKT Level";
+        }else if(choice.equals("hr")){
+            graph = hrAll;
+            title = "HR Level";
+        }else if(choice.equals("hrv")){
+            graph = hrvAll;
+            title = "HRV Level";
+        }else{
+            graph = anxiety;
+            title = "Anxiety Level";
+        }
 
         cartesian.animation(true);
 
@@ -76,16 +105,16 @@ public class ResultsActivity extends AppCompatActivity {
 
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
 
-        cartesian.title("Anxiety Level of the session");
+        cartesian.title(title + " of the session");
 
-        cartesian.yAxis(0).title("Anxiety Level");
+        cartesian.yAxis(0).title(title);
         cartesian.xAxis(0).title("Time (sec)");
         cartesian.xAxis(0).labels().padding(5d, 5d, 5d, 5d);
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-        for(int i=0; i<anxiety.size();i++) {
-            seriesData.add(new CustomDataEntry(""+i, anxiety.get(i)));
+        for(int i=0; i<graph.size();i++) {
+            seriesData.add(new CustomDataEntry(""+i, graph.get(i)));
         }
 
           Set set = Set.instantiate();
@@ -96,7 +125,7 @@ public class ResultsActivity extends AppCompatActivity {
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
-        series1.name("No binaural");
+        series1.name(title);
         series1.hovered().markers().enabled(true);
         series1.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -150,5 +179,26 @@ public class ResultsActivity extends AppCompatActivity {
         }
 
     }
+
+    public void showGsr(View view){
+        anyChartView.clear();
+        setGraph("gsr");
+    }
+
+    public void showHrv(View view) {
+        anyChartView.clear();
+        setGraph("hrv");
+    }
+
+    public void showSkt(View view){
+        anyChartView.clear();
+        setGraph("skt");
+    }
+
+    public void showHr(View view){
+        anyChartView.clear();
+        setGraph("hr");
+    }
+
     }
 

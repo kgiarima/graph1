@@ -30,6 +30,7 @@
                 android:textSize="20sp"
                 android:text="GSR"
                 android:gravity="center"
+                android:onClick="showGsr"
                 />
 
             <TextView
@@ -40,6 +41,7 @@
                 android:textSize="20sp"
                 android:text="SKT"
                 android:gravity="center"
+                android:onClick="showSkt"
                 />
 
         </LinearLayout>
@@ -59,6 +61,7 @@
                 android:textSize="20sp"
                 android:text="HR"
                 android:gravity="center"
+                android:onClick="showHr"
                 />
 
             <TextView
@@ -69,6 +72,7 @@
                 android:textSize="20sp"
                 android:text="HRV"
                 android:gravity="center"
+                android:onClick="showHrv"
                 />
 
         </LinearLayout>

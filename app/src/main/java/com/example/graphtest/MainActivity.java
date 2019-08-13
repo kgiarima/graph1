@@ -34,7 +34,7 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
-    private static int anxietyLvl, gsr, skt, hr, hrv, linesNum;
+    private static int anxietyLvl, gsr, skt, hr, hrv, linesNum, status;
     private static List<Integer> nums,gsrTotal,hrTotal,hrvTotal,sktTotal, gsrAll, sktAll, hrAll, hrvAll;
     private static Button startBtn, backBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
     private static boolean isRunning, isBtOn;
@@ -79,24 +79,46 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     anxietyLvl = r.nextInt(100);
-//                    gsr = r.nextInt(100);
-//                    skt = r.nextInt(100);
-//                    hr = r.nextInt(100);
-//                    hrv = r.nextInt(100);
 
                     gsr = gsrAll.get(counter);
                     skt = sktAll.get(counter);
                     hr = hrAll.get(counter);
                     hrv = hrvAll.get(counter);
 
-                    nums.add(anxietyLvl);
-                    gsrTotal.add(gsr);
-                    sktTotal.add(skt);
-                    hrTotal.add(hr);
-                    hrvTotal.add(hrv);
-                    counter++;
+                    status = checkHealthStatus();
 
-                    currentValue = anxietyLvl;
+                    //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
+
+                    if(status!=1&&status!=4) {
+                        gsrTotal.add(gsr);
+                        gsrText.setText("GSR : " + gsr);
+                    }else{
+                        gsrText.setText("GSR not found");
+                    }
+
+                    if(status!=2&&status!=4) {
+                        hrTotal.add(hr);
+                        hrvTotal.add(hrv);
+                        hrText.setText("HR : " + hr);
+                        hrvText.setText("HRV : " + hrv);
+                    }else{
+                        hrText.setText("HR not found");
+                        hrvText.setText("HRV not found");
+                    }
+
+                    if(status!=3&&status!=4) {
+                        sktTotal.add(skt);
+                        sktText.setText("SKT : " + skt);
+                    }else{
+                        sktText.setText("SKT not found");
+                    }
+
+                    if(status==0) {
+                        nums.add(anxietyLvl);
+                        currentValue = anxietyLvl;
+                    }else{
+                        currentValue = 0;
+                    }
 
                     circularGauge.autoRedraw();//***check
                     circularGauge.label(1)
@@ -107,10 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     circularGauge.data(new SingleValueDataSet(new Double[]{currentValue}));
                     circularGauge.autoRedraw();//***check
 
-                    gsrText.setText("GSR : " + gsr);
-                    sktText.setText("SKT : " + skt);
-                    hrText.setText("HR : " + hr);
-                    hrvText.setText("HRV : " + hrv);
+                    counter++;
 
                     if(counter==linesNum){
                         isRunning = false;
@@ -152,32 +171,32 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public static List<Integer> getTotalScore(){
+    public int checkHealthStatus(){
+        gsrDot.setBackgroundResource(R.drawable.dot_green);
+        sktDot.setBackgroundResource(R.drawable.dot_green);
+        hrDot.setBackgroundResource(R.drawable.dot_green);
+        hrvDot.setBackgroundResource(R.drawable.dot_green);
 
-        return nums;
+        if(statusAll.get(counter).equals("M")){
+            return 0;
+        }else if(statusAll.get(counter).equals("G")){
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            return 1;
+        }else if(statusAll.get(counter).equals("H")){
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
+            return 2;
+        }else if(statusAll.get(counter).equals("T")){
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            return 3;
+        }else{
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
+            return 4;
+        }
     }
-
-//    public static double getAvg(String val){
-//        int sum=0;
-//        avg = new ArrayList<Integer>();
-//        switch (val) {
-//            case "gsr":
-//                avg = new ArrayList<Integer>(gsrTotal);
-//            case "skt":
-//                avg =new ArrayList<Integer>(sktTotal);
-//            case "hr":
-//                avg =new ArrayList<Integer>(hrTotal);
-//            case "hrv":
-//                avg =new ArrayList<Integer>(hrvTotal);
-//            default:
-//                System.out.println("error");
-//        }
-//        for(int i=0;i<avg.size();i++){
-//            sum+= avg.get(i);
-//        }
-//        return sum/counter;
-//    }
-
 
     private void initialize() {
 
@@ -213,7 +232,6 @@ public class MainActivity extends AppCompatActivity {
 
         anyChartView = findViewById(R.id.any_chart_view);
         circularGauge = AnyChart.circular();
-
 
     }
 
@@ -356,6 +374,12 @@ public class MainActivity extends AppCompatActivity {
         btToast.setGravity(Gravity.CENTER, 0, 0);
 
     }
+
+    public static List<Integer> getTotalScore(){ return nums; }
+    public static List<Integer> getTotalGsr(){ return gsrTotal; }
+    public static List<Integer> getTotalSkt(){ return sktTotal; }
+    public static List<Integer> getTotalHr(){ return hrTotal; }
+    public static List<Integer> getTotalHrv(){ return hrvTotal; }
 
     public static double getGsr(){
         int sum = 0;
