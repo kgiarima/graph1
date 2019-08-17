@@ -1,53 +1,52 @@
 package com.example.graphtest;
 
-import android.content.Context;
+
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.SingleValueDataSet;
 import com.anychart.charts.CircularGauge;
 import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
-
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
-    private static int anxietyLvl, gsr, skt, hr, hrv, linesNum, status;
-    private static List<Integer> nums,gsrTotal,hrTotal,hrvTotal,sktTotal, gsrAll, sktAll, hrAll, hrvAll;
-    private static Button startBtn, backBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
-    private static boolean isRunning, isBtOn;
+    private static int anxietyLvl;
+
+    private static List<Integer> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal;
+    private static Button startBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
+    private static boolean isRunning, deviceFound, isConnected;
     private static AnyChartView anyChartView;
     private static CircularGauge circularGauge;
-    private static double currentValue;
     private static TextView gsrText, sktText, hrText, hrvText;
-    private static int btDuration, counter;
-    private static Context context;
-    private static String btText, text;
-    private static Toast btToast;
-    private static ArrayList<String> statusAll;
-    private static BufferedReader reader;
+
+    //arduino
+    BluetoothAdapter bluetoothAdapter;
+    ArrayList<String> devices;
+    BluetoothDevice mDevice;
+    BluetoothSocket mSocket;
+    InputStream mInputStream;
+    Thread workerThread;
+    volatile boolean stopWorker;
 
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -55,170 +54,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialize();
-        setTextValues();
-        createBtToast();
         createChart();
-    }
-
-    public void start(View view) {
-
-        //if procedure has not already started and bluetooth is on..
-        if (!isRunning && isBtOn) {
-
-            isRunning = true;
-            startBtn.setText("Stop");
-
-            final Timer t = new Timer();
-            t.schedule(new TimerTask() {
-                @Override
-                public void run() {
-
-                    // check if procedure has been stopped
-                    if (!isRunning) {
-                        t.cancel();
-                    }
-
-                    anxietyLvl = r.nextInt(100);
-
-                    gsr = gsrAll.get(counter);
-                    skt = sktAll.get(counter);
-                    hr = hrAll.get(counter);
-                    hrv = hrvAll.get(counter);
-
-                    status = checkHealthStatus();
-
-                    //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
-
-                    if(status!=1&&status!=4) {
-                        gsrTotal.add(gsr);
-                        gsrText.setText("GSR : " + gsr);
-                    }else{
-                        gsrText.setText("GSR not found");
-                    }
-
-                    if(status!=2&&status!=4) {
-                        hrTotal.add(hr);
-                        hrvTotal.add(hrv);
-                        hrText.setText("HR : " + hr);
-                        hrvText.setText("HRV : " + hrv);
-                    }else{
-                        hrText.setText("HR not found");
-                        hrvText.setText("HRV not found");
-                    }
-
-                    if(status!=3&&status!=4) {
-                        sktTotal.add(skt);
-                        sktText.setText("SKT : " + skt);
-                    }else{
-                        sktText.setText("SKT not found");
-                    }
-
-                    if(status==0) {
-                        nums.add(anxietyLvl);
-                        currentValue = anxietyLvl;
-                    }else{
-                        currentValue = 0;
-                    }
-
-                    circularGauge.autoRedraw();//***check
-                    circularGauge.label(1)
-                            .text("<span style=\"font-size: 20\">" + currentValue + "</span>") //currentValue should be Anxiety Level
-                            .useHtml(true)
-                            .hAlign(HAlign.CENTER);
-
-                    circularGauge.data(new SingleValueDataSet(new Double[]{currentValue}));
-                    circularGauge.autoRedraw();//***check
-
-                    counter++;
-
-                    if(counter==linesNum){
-                        isRunning = false;
-                        startBtn.setText("Start");
-                        t.cancel();
-                        startActivity(new Intent(MainActivity.this, ResultsActivity.class));
-                    }
-
-                }
-            }, 0, 1000);
-        }else if(!isRunning && !isBtOn){
-            btToast.show();
-        }else{
-            isRunning = false;
-            startBtn.setText("Start");
-            startActivity(new Intent(MainActivity.this, ResultsActivity.class));
-        }
-    }
-
-    public void btCheck(View view){
-
-        if(isBtOn){
-            btBtn.setBackgroundResource(R.drawable.bluetooth_icon_off);
-            isBtOn =false;
-            isRunning = false;
-            startBtn.setText("Start");
-            gsrDot.setBackgroundResource(R.drawable.dot_red);
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
-        }else{
-            btBtn.setBackgroundResource(R.drawable.bluetooth_icon);
-            isBtOn =true;
-            gsrDot.setBackgroundResource(R.drawable.dot_green);
-            sktDot.setBackgroundResource(R.drawable.dot_green);
-            hrDot.setBackgroundResource(R.drawable.dot_green);
-            hrvDot.setBackgroundResource(R.drawable.dot_green);
-        }
-
-    }
-
-    public int checkHealthStatus(){
-        gsrDot.setBackgroundResource(R.drawable.dot_green);
-        sktDot.setBackgroundResource(R.drawable.dot_green);
-        hrDot.setBackgroundResource(R.drawable.dot_green);
-        hrvDot.setBackgroundResource(R.drawable.dot_green);
-
-        if(statusAll.get(counter).equals("M")){
-            return 0;
-        }else if(statusAll.get(counter).equals("G")){
-            gsrDot.setBackgroundResource(R.drawable.dot_red);
-            return 1;
-        }else if(statusAll.get(counter).equals("H")){
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
-            return 2;
-        }else if(statusAll.get(counter).equals("T")){
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            return 3;
-        }else{
-            gsrDot.setBackgroundResource(R.drawable.dot_red);
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
-            return 4;
-        }
     }
 
     private void initialize() {
 
-        gsrAll = new ArrayList<Integer>();
-        sktAll = new ArrayList<Integer>();
-        hrAll = new ArrayList<Integer>();
-        hrvAll = new ArrayList<Integer>();
-        statusAll = new ArrayList<String>();
-        isBtOn = false;
         isRunning = false;
         r = new Random();
-        counter = 0;
-        linesNum = 0;
 
-        nums = new ArrayList<Integer>();
+        //bluetooth init
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        devices = new ArrayList<String>();
+        deviceFound = false;
+        isConnected = false;
+
+        anxietyTotal = new ArrayList<Integer>();
         gsrTotal = new ArrayList<Integer>();
         hrTotal = new ArrayList<Integer>();
         hrvTotal = new ArrayList<Integer>();
         sktTotal = new ArrayList<Integer>();
 
         startBtn = (Button) findViewById(R.id.startBtn);
-        backBtn = (Button) findViewById(R.id.backBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
         gsrDot = (Button) findViewById(R.id.gsrDot);
         sktDot = (Button) findViewById(R.id.sktDot);
@@ -232,30 +88,189 @@ public class MainActivity extends AppCompatActivity {
 
         anyChartView = findViewById(R.id.any_chart_view);
         circularGauge = AnyChart.circular();
-
     }
 
-    public void setTextValues(){
-        try{
-            final InputStream file = getAssets().open("demoValues.txt");
-            reader = new BufferedReader(new InputStreamReader(file));
-            String line = reader.readLine();
-            while(line != null){
-                linesNum++;
-                String[] data = line.split("\\s*,\\s*");
-                statusAll.add(data[0]);
-                gsrAll.add(Integer.parseInt(data[2]));
-                sktAll.add(Integer.parseInt(data[7]));
-                hrAll.add(Integer.parseInt(data[8]));
-                hrvAll.add(Integer.parseInt(data[9]));
-                line = reader.readLine();
+    public void btCheck(View view) {
+
+        if (isConnected) {
+            try {
+                mInputStream.close();
+                mSocket.close();
+
+                isRunning = false;
+                isConnected = false;
+                Toast.makeText(MainActivity.this, "Connection was closed!", Toast.LENGTH_SHORT).show();
+                startBtn.setText("Start");
+                btBtn.setBackgroundResource(R.drawable.bluetooth_icon_off);
+                gsrDot.setBackgroundResource(R.drawable.dot_red);
+                sktDot.setBackgroundResource(R.drawable.dot_red);
+                hrDot.setBackgroundResource(R.drawable.dot_red);
+                hrvDot.setBackgroundResource(R.drawable.dot_red);
+            } catch (IOException ex) {
+                Toast.makeText(MainActivity.this, "Error while closing the connection", Toast.LENGTH_SHORT).show();
             }
-        } catch(IOException ioe){
-            ioe.printStackTrace();
+        } else {
+            if (bluetoothAdapter.isEnabled()) {
+
+                Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+                for (BluetoothDevice bt : pairedDevices) {
+                    if (bt.getName().equals("RN42-CD05")) {
+                        mDevice = bt;
+                        deviceFound = true;
+                        break;
+                    }
+                    Toast.makeText(MainActivity.this, "Arduino device is not paired with the phone", Toast.LENGTH_SHORT).show();
+                }
+
+                //device is paired with the phone
+                if (deviceFound) {
+                    //try to establish a connection
+                    boolean con = connect();
+
+                    if(!con) {
+                        Toast.makeText(MainActivity.this, "Device could not connect!", Toast.LENGTH_SHORT).show();
+                    }else {
+                        isConnected = true;
+                        Toast.makeText(MainActivity.this, "Device connected!", Toast.LENGTH_SHORT).show();
+
+                        btBtn.setBackgroundResource(R.drawable.bluetooth_icon);
+                        gsrDot.setBackgroundResource(R.drawable.dot_green);
+                        sktDot.setBackgroundResource(R.drawable.dot_green);
+                        hrDot.setBackgroundResource(R.drawable.dot_green);
+                        hrvDot.setBackgroundResource(R.drawable.dot_green);
+                    }
+                }
+            } else {
+                Toast.makeText(MainActivity.this, "Bluetooth is off", Toast.LENGTH_SHORT);
+            }
         }
     }
 
-    public void createChart(){
+    public boolean connect() {
+        try {
+            // Orismos UUID gia seiriaki metafora dedomenwn
+            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard Serial Port Service ID
+
+            mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
+            mSocket.connect();
+            mInputStream = mSocket.getInputStream();
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    void beginListenForData() {
+
+        stopWorker = false;
+        workerThread = new Thread(new Runnable() {
+            public void run() {
+                while (!Thread.currentThread().isInterrupted() && !stopWorker) {
+                    try {
+                        BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                        String line = null;
+                        while ((line = in.readLine()) != null) {
+                            final String tempLine = line;
+                            System.out.println("****** 202 data: " + tempLine);
+                            String[] data = tempLine.split("\\s*,\\s*");
+
+                            String status = data[0];
+                            int statusCheck = checkHealthStatus(status);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
+
+                            if (statusCheck==0) {
+
+                                int gsr = (int) Double.parseDouble(data[2]);
+                                int skt = (int) Double.parseDouble(data[7]);
+                                int hr = (int) Double.parseDouble(data[8]);
+                                int hrv = (int) Double.parseDouble(data[9]);
+                                int anxietyLvl = r.nextInt(100);
+
+                                updateValues(gsr,skt,hr,hrv,anxietyLvl);
+                            }
+                        }
+                    } catch (IOException ex) {
+                        stopWorker = true;
+                    }
+                }
+            }
+        });
+        workerThread.start();
+    }
+
+    public void updateValues(int gsr,int skt,int hr,int hrv,int anxietyLvl) {
+
+        gsrTotal.add(gsr);
+        sktTotal.add(skt);
+        hrTotal.add(hr);
+        hrvTotal.add(hrv);
+        anxietyTotal.add(anxietyLvl);
+
+        gsrText.setText("GSR : " + gsr);
+        sktText.setText("SKT : " + skt);
+        hrText.setText("HR : " + hr);
+        hrvText.setText("HRV : " + hrv);
+
+        circularGauge.autoRedraw();//***check
+        circularGauge.label(1)
+                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>") //currentValue should be Anxiety Level
+                .useHtml(true)
+                .hAlign(HAlign.CENTER);
+
+        circularGauge.data(new SingleValueDataSet(new Double[]{(double) anxietyLvl}));
+        circularGauge.autoRedraw();//***check
+    }
+
+    public void start(View view) {
+        //if procedure has not already started and bluetooth is on..
+        if (!isRunning && isConnected) {
+
+            isRunning = true;
+            startBtn.setText("Stop");
+            beginListenForData();
+
+        } else if (!isRunning && !isConnected) {
+            Toast.makeText(MainActivity.this, "Device is not connected", Toast.LENGTH_SHORT).show();
+        } else {
+            startBtn.setText("Start");
+            stopWorker = true;
+            isRunning = false;
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {}
+
+            startActivity(new Intent(MainActivity.this, ResultsActivity.class));
+        }
+    }
+
+    public int checkHealthStatus(String status) {
+        gsrDot.setBackgroundResource(R.drawable.dot_green);
+        sktDot.setBackgroundResource(R.drawable.dot_green);
+        hrDot.setBackgroundResource(R.drawable.dot_green);
+        hrvDot.setBackgroundResource(R.drawable.dot_green);
+
+        if (status.equals("M")) {
+            return 0;
+        } else if (status.equals("G")) {
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            return 1;
+        } else if (status.equals("H")) {
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
+            return 2;
+        } else if (status.equals("T")) {
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            return 3;
+        } else {
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
+            return 4;
+        }
+    }
+
+    public void createChart() {
 
         circularGauge.fill("#fff")
                 .stroke(null)
@@ -264,9 +279,9 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.startAngle(0)
                 .sweepAngle(360);
 
-        currentValue = 0;
+        anxietyLvl = 0;
 
-        circularGauge.data(new SingleValueDataSet(new Double[] { currentValue }));
+        circularGauge.data(new SingleValueDataSet(new Double[]{(double) anxietyLvl}));
 
         circularGauge.axis(0)
                 .startAngle(-150)
@@ -308,7 +323,7 @@ public class MainActivity extends AppCompatActivity {
                 .padding(15, 20, 0, 0);
 
         circularGauge.label(1)
-                .text("<span style=\"font-size: 20\">" + currentValue + "</span>") //currentValue is current Anxiety Level
+                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>") //currentValue is current Anxiety Level
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
@@ -365,52 +380,58 @@ public class MainActivity extends AppCompatActivity {
     initialize a toast to appear when bluetooth connection is off and start is clicked
     the toast will only appear after the command btToast.show() is run
      */
-    public void createBtToast(){
 
-        context = getApplicationContext();
-        btText = "Bluetooth is not connected!";
-        btDuration = Toast.LENGTH_SHORT;
-        btToast = Toast.makeText(context, btText, btDuration);
-        btToast.setGravity(Gravity.CENTER, 0, 0);
-
+    public static List<Integer> getTotalScore() {
+        return anxietyTotal;
     }
 
-    public static List<Integer> getTotalScore(){ return nums; }
-    public static List<Integer> getTotalGsr(){ return gsrTotal; }
-    public static List<Integer> getTotalSkt(){ return sktTotal; }
-    public static List<Integer> getTotalHr(){ return hrTotal; }
-    public static List<Integer> getTotalHrv(){ return hrvTotal; }
-
-    public static double getGsr(){
-        int sum = 0;
-        for(int i=0;i<gsrTotal.size();i++){
-            sum+= gsrTotal.get(i);
-        }
-        return sum/counter;
+    public static List<Integer> getTotalGsr() {
+        return gsrTotal;
     }
 
-    public static double getSkt(){
-        int sum = 0;
-        for(int i=0;i<sktTotal.size();i++){
-            sum+= sktTotal.get(i);
-        }
-        return sum/counter;
+    public static List<Integer> getTotalSkt() {
+        return sktTotal;
     }
 
-    public static double getHr(){
-        int sum = 0;
-        for(int i=0;i<hrTotal.size();i++){
-            sum+= hrTotal.get(i);
-        }
-        return sum/counter;
+    public static List<Integer> getTotalHr() {
+        return hrTotal;
     }
 
-    public static double getHrv(){
+    public static List<Integer> getTotalHrv() {
+        return hrvTotal;
+    }
+
+    public static double getGsr() {
         int sum = 0;
-        for(int i=0;i<hrvTotal.size();i++){
-            sum+= hrvTotal.get(i);
+        for (int i = 0; i < gsrTotal.size(); i++) {
+            sum += gsrTotal.get(i);
         }
-        return sum/counter;
+        return sum / gsrTotal.size();
+    }
+
+    public static double getSkt() {
+        int sum = 0;
+        for (int i = 0; i < sktTotal.size(); i++) {
+            sum += sktTotal.get(i);
+        }
+        return sum / sktTotal.size();
+    }
+
+    public static double getHr() {
+        int sum = 0;
+        for (int i = 0; i < hrTotal.size(); i++) {
+            sum += hrTotal.get(i);
+        }
+        return sum / hrTotal.size();
+    }
+
+    public static double getHrv() {
+        int sum = 0;
+        for (int i = 0; i < hrvTotal.size(); i++) {
+            sum += hrvTotal.get(i);
+        }
+        return sum / hrvTotal.size();
     }
 
 }
+
