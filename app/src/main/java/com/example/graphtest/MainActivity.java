@@ -167,9 +167,11 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted() && !stopWorker) {
                     try {
+                        if(stopWorker){break;}
                         BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
                         String line = null;
-                        while ((line = in.readLine()) != null) {
+                        while ( (line = in.readLine()) != null) {
+                            if(stopWorker){break;}
                             final String tempLine = line;
                             System.out.println("****** 202 data: " + tempLine);
                             String[] data = tempLine.split("\\s*,\\s*");
@@ -226,6 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
             isRunning = true;
             startBtn.setText("Stop");
+
             beginListenForData();
 
         } else if (!isRunning && !isConnected) {
@@ -406,7 +409,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < gsrTotal.size(); i++) {
             sum += gsrTotal.get(i);
         }
-        return sum / gsrTotal.size();
+        if(gsrTotal.size()>0) {
+            return sum / gsrTotal.size();
+        }
+        else return 0;
     }
 
     public static double getSkt() {
@@ -414,7 +420,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < sktTotal.size(); i++) {
             sum += sktTotal.get(i);
         }
-        return sum / sktTotal.size();
+        if(sktTotal.size()>0) {
+            return sum / sktTotal.size();
+        }
+        else return 0;
     }
 
     public static double getHr() {
@@ -422,7 +431,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < hrTotal.size(); i++) {
             sum += hrTotal.get(i);
         }
-        return sum / hrTotal.size();
+        if(hrTotal.size()>0) {
+            return sum / hrTotal.size();
+        }
+        else return 0;
     }
 
     public static double getHrv() {
@@ -430,7 +442,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < hrvTotal.size(); i++) {
             sum += hrvTotal.get(i);
         }
-        return sum / hrvTotal.size();
+        if(hrvTotal.size()>0) {
+            return sum / hrvTotal.size();
+        }
+        else return 0;
     }
 
 }
