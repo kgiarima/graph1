@@ -46,16 +46,16 @@ public class ResultsActivity extends AppCompatActivity {
 
         mainData = new MainActivity();
 
-        gsr = mainData.getGsr(); //Avg("gsr");
-        skt = mainData.getSkt(); //Avg("skt");
-        hr = mainData.getHr(); //Avg("hr");
-        hrv = mainData.getHrv(); //Avg("hrv");
+        gsr = mainData.getMO("gsr"); //Avg("gsr");
+        skt = mainData.getMO("skt"); //Avg("skt");
+        hr = mainData.getMO("hr"); //Avg("hr");
+        hrv = mainData.getMO("hrv"); //Avg("hrv");
 
-        anxiety = mainData.getTotalScore();
-        gsrAll = mainData.getTotalGsr();
-        sktAll = mainData.getTotalSkt();
-        hrAll = mainData.getTotalHr();
-        hrvAll = mainData.getTotalHrv();
+        anxiety = mainData.getTotal("anxiety");
+        gsrAll = mainData.getTotal("gsr");
+        sktAll = mainData.getTotal("skt");
+        hrAll = mainData.getTotal("hr");
+        hrvAll = mainData.getTotal("hrv");
 
         gsrText.setText("GSR : "+gsr);
         sktText.setText("SKT : "+skt);

@@ -5,18 +5,21 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.SingleValueDataSet;
 import com.anychart.charts.CircularGauge;
 import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,18 +29,19 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
     private static int anxietyLvl;
-
     private static List<Integer> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal;
     private static Button startBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
-    private static boolean isRunning, deviceFound, isConnected;
+    private static boolean isRunning, deviceFound, isConnected, binauralOn;
     private static AnyChartView anyChartView;
-    private static CircularGauge circularGauge;
+    private CircularGauge circularGauge;
     private static TextView gsrText, sktText, hrText, hrvText;
+    private MediaPlayer mp;
 
     //arduino
     BluetoothAdapter bluetoothAdapter;
@@ -60,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private void initialize() {
 
         isRunning = false;
+        binauralOn = false;
         r = new Random();
 
         //bluetooth init
@@ -87,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
         anyChartView = findViewById(R.id.any_chart_view);
-        circularGauge = AnyChart.circular();
     }
 
     public void btCheck(View view) {
@@ -127,9 +131,9 @@ public class MainActivity extends AppCompatActivity {
                     //try to establish a connection
                     boolean con = connect();
 
-                    if(!con) {
+                    if (!con) {
                         Toast.makeText(MainActivity.this, "Device could not connect!", Toast.LENGTH_SHORT).show();
-                    }else {
+                    } else {
                         isConnected = true;
                         Toast.makeText(MainActivity.this, "Device connected!", Toast.LENGTH_SHORT).show();
 
@@ -167,11 +171,15 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while (!Thread.currentThread().isInterrupted() && !stopWorker) {
                     try {
-                        if(stopWorker){break;}
+                        if (stopWorker) {
+                            break;
+                        }
                         BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
                         String line = null;
-                        while ( (line = in.readLine()) != null) {
-                            if(stopWorker){break;}
+                        while ((line = in.readLine()) != null) {
+                            if (stopWorker) {
+                                break;
+                            }
                             final String tempLine = line;
                             System.out.println("****** 202 data: " + tempLine);
                             String[] data = tempLine.split("\\s*,\\s*");
@@ -179,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                             String status = data[0];
                             int statusCheck = checkHealthStatus(status);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
 
-                            if (statusCheck==0) {
+                            if (statusCheck == 0) {
 
                                 int gsr = (int) Double.parseDouble(data[2]);
                                 int skt = (int) Double.parseDouble(data[7]);
@@ -187,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                                 int hrv = (int) Double.parseDouble(data[9]);
                                 int anxietyLvl = r.nextInt(100);
 
-                                updateValues(gsr,skt,hr,hrv,anxietyLvl);
+                                updateValues(gsr, skt, hr, hrv, anxietyLvl);
                             }
                         }
                     } catch (IOException ex) {
@@ -199,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
         workerThread.start();
     }
 
-    public void updateValues(int gsr,int skt,int hr,int hrv,int anxietyLvl) {
+    public void updateValues(int gsr, int skt, int hr, int hrv, int anxietyLvl) {
 
         gsrTotal.add(gsr);
         sktTotal.add(skt);
@@ -226,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
         //if procedure has not already started and bluetooth is on..
         if (!isRunning && isConnected) {
 
+            // createChart();
             isRunning = true;
             startBtn.setText("Stop");
 
@@ -237,10 +246,12 @@ public class MainActivity extends AppCompatActivity {
             startBtn.setText("Start");
             stopWorker = true;
             isRunning = false;
+            pauseBinaural();
 
             try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {}
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+            }
 
             startActivity(new Intent(MainActivity.this, ResultsActivity.class));
         }
@@ -273,7 +284,46 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void addBinaural(View view) {
+
+        //player.release()
+        if (!binauralOn) {
+            Toast.makeText(this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
+            binauralOn = true;
+            if (mp == null) {
+                mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
+            }
+            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    mp.release();
+                    mp = null;
+                }
+            });
+            try {
+                // TimeUnit.SECONDS.sleep(5);
+                mp.start();
+
+            } catch (Exception e) {
+                Toast.makeText(this, "Error playing the binaural", Toast.LENGTH_SHORT).show();
+                binauralOn = false;
+            }
+        } else {
+            pauseBinaural();
+        }
+    }
+
+    public void pauseBinaural() {
+        if (mp != null) {
+            Toast.makeText(this, "Binaural Mode turned Off", Toast.LENGTH_SHORT).show();
+            binauralOn = false;
+            mp.pause();
+        }
+    }
+
     public void createChart() {
+
+        circularGauge = AnyChart.circular();
 
         circularGauge.fill("#fff")
                 .stroke(null)
@@ -326,7 +376,7 @@ public class MainActivity extends AppCompatActivity {
                 .padding(15, 20, 0, 0);
 
         circularGauge.label(1)
-                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>") //currentValue is current Anxiety Level
+                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>")
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
@@ -379,74 +429,33 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /*
-    initialize a toast to appear when bluetooth connection is off and start is clicked
-    the toast will only appear after the command btToast.show() is run
-     */
-
-    public static List<Integer> getTotalScore() {
-        return anxietyTotal;
+    public static List<Integer> getTotal(String s) {
+        if (s.equals("anxiety")) return anxietyTotal;
+        else if (s.equals("gsr")) return gsrTotal;
+        else if (s.equals("skt")) return sktTotal;
+        else if (s.equals("hr")) return hrTotal;
+        else if (s.equals("hrv")) return hrvTotal;
+        else return anxietyTotal;
     }
 
-    public static List<Integer> getTotalGsr() {
-        return gsrTotal;
-    }
+    public static double getMO(String s) {
+        List<Integer> list;
+        if (s.equals("anxiety")) list = anxietyTotal;
+        else if (s.equals("gsr")) list = gsrTotal;
+        else if (s.equals("skt")) list = sktTotal;
+        else if (s.equals("hr")) list = hrTotal;
+        else if (s.equals("hrv")) list = hrvTotal;
+        else list = anxietyTotal;
 
-    public static List<Integer> getTotalSkt() {
-        return sktTotal;
-    }
-
-    public static List<Integer> getTotalHr() {
-        return hrTotal;
-    }
-
-    public static List<Integer> getTotalHrv() {
-        return hrvTotal;
-    }
-
-    public static double getGsr() {
         int sum = 0;
-        for (int i = 0; i < gsrTotal.size(); i++) {
-            sum += gsrTotal.get(i);
+        for (int i = 0; i < list.size(); i++) {
+            sum += list.get(i);
         }
-        if(gsrTotal.size()>0) {
-            return sum / gsrTotal.size();
-        }
-        else return 0;
+        if (list.size() > 0) {
+            return sum / list.size();
+        } else return 0;
     }
 
-    public static double getSkt() {
-        int sum = 0;
-        for (int i = 0; i < sktTotal.size(); i++) {
-            sum += sktTotal.get(i);
-        }
-        if(sktTotal.size()>0) {
-            return sum / sktTotal.size();
-        }
-        else return 0;
-    }
-
-    public static double getHr() {
-        int sum = 0;
-        for (int i = 0; i < hrTotal.size(); i++) {
-            sum += hrTotal.get(i);
-        }
-        if(hrTotal.size()>0) {
-            return sum / hrTotal.size();
-        }
-        else return 0;
-    }
-
-    public static double getHrv() {
-        int sum = 0;
-        for (int i = 0; i < hrvTotal.size(); i++) {
-            sum += hrvTotal.get(i);
-        }
-        if(hrvTotal.size()>0) {
-            return sum / hrvTotal.size();
-        }
-        else return 0;
-    }
 
 }
 
