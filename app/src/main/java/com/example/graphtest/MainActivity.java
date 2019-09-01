@@ -24,8 +24,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -34,14 +37,15 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
-    private static int anxietyLvl;
-    private static List<Integer> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal;
-    private static Button startBtn, btBtn, gsrDot, sktDot, hrDot, hrvDot;
+    private static int anxietyLvl, gsr, skt, hr, hrv;
+    private static Map<Integer, List<Integer>> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal; // Map<0,List> for no binaural, Map<1,List> for Alpha waves
+    private static Button startBtn, btBtn, binBtn, gsrDot, sktDot, hrDot, hrvDot;
     private static boolean isRunning, deviceFound, isConnected, binauralOn;
     private static AnyChartView anyChartView;
-    private CircularGauge circularGauge;
+    private static CircularGauge circularGauge;
     private static TextView gsrText, sktText, hrText, hrvText;
     private MediaPlayer mp;
+    private static List<Integer> gsrNew, sktNew, hrNew, hrvNew, anxietyNew;
 
     //arduino
     BluetoothAdapter bluetoothAdapter;
@@ -73,14 +77,16 @@ public class MainActivity extends AppCompatActivity {
         deviceFound = false;
         isConnected = false;
 
-        anxietyTotal = new ArrayList<Integer>();
-        gsrTotal = new ArrayList<Integer>();
-        hrTotal = new ArrayList<Integer>();
-        hrvTotal = new ArrayList<Integer>();
-        sktTotal = new ArrayList<Integer>();
+        anxietyTotal = new HashMap<Integer, List<Integer>>();
+        gsrTotal = new HashMap<Integer, List<Integer>>();
+        hrTotal = new HashMap<Integer, List<Integer>>();
+        hrvTotal = new HashMap<Integer, List<Integer>>();
+        sktTotal = new HashMap<Integer, List<Integer>>();
 
         startBtn = (Button) findViewById(R.id.startBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
+        binBtn = (Button) findViewById(R.id.binBtn);
+
         gsrDot = (Button) findViewById(R.id.gsrDot);
         sktDot = (Button) findViewById(R.id.sktDot);
         hrDot = (Button) findViewById(R.id.hrDot);
@@ -100,12 +106,11 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mInputStream.close();
                 mSocket.close();
-
+                btBtn.setActivated(false);
                 isRunning = false;
                 isConnected = false;
                 Toast.makeText(MainActivity.this, "Connection was closed!", Toast.LENGTH_SHORT).show();
                 startBtn.setText("Start");
-                btBtn.setBackgroundResource(R.drawable.bluetooth_icon_off);
                 gsrDot.setBackgroundResource(R.drawable.dot_red);
                 sktDot.setBackgroundResource(R.drawable.dot_red);
                 hrDot.setBackgroundResource(R.drawable.dot_red);
@@ -136,8 +141,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         isConnected = true;
                         Toast.makeText(MainActivity.this, "Device connected!", Toast.LENGTH_SHORT).show();
-
-                        btBtn.setBackgroundResource(R.drawable.bluetooth_icon);
+                        btBtn.setActivated(true);
                         gsrDot.setBackgroundResource(R.drawable.dot_green);
                         sktDot.setBackgroundResource(R.drawable.dot_green);
                         hrDot.setBackgroundResource(R.drawable.dot_green);
@@ -183,19 +187,20 @@ public class MainActivity extends AppCompatActivity {
                             final String tempLine = line;
                             System.out.println("****** 202 data: " + tempLine);
                             String[] data = tempLine.split("\\s*,\\s*");
-
                             String status = data[0];
                             int statusCheck = checkHealthStatus(status);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
 
                             if (statusCheck == 0) {
 
-                                int gsr = (int) Double.parseDouble(data[2]);
-                                int skt = (int) Double.parseDouble(data[7]);
-                                int hr = (int) Double.parseDouble(data[8]);
-                                int hrv = (int) Double.parseDouble(data[9]);
-                                int anxietyLvl = r.nextInt(100);
+                                gsr = (int) Double.parseDouble(data[2]);
+                                skt = (int) Double.parseDouble(data[7]);
+                                hr = (int) Double.parseDouble(data[8]);
+                                hrv = (int) Double.parseDouble(data[9]);
+                                anxietyLvl = r.nextInt(100);
 
                                 updateValues(gsr, skt, hr, hrv, anxietyLvl);
+                            } else{
+                                showValues(0,0,0,0,0);
                             }
                         }
                     } catch (IOException ex) {
@@ -208,13 +213,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateValues(int gsr, int skt, int hr, int hrv, int anxietyLvl) {
+        int bin = 0;
+        if (binauralOn) {
+            bin = 1;
+        }
 
-        gsrTotal.add(gsr);
-        sktTotal.add(skt);
-        hrTotal.add(hr);
-        hrvTotal.add(hrv);
-        anxietyTotal.add(anxietyLvl);
+        if(!(gsrTotal.get(bin)==null)){
+            anxietyNew = new ArrayList<>(gsrTotal.get(bin));
+            gsrNew = new ArrayList<>(sktTotal.get(bin));
+            sktNew = new ArrayList<>(hrTotal.get(bin));
+            hrNew = new ArrayList<>(hrvTotal.get(bin));
+            hrvNew = new ArrayList<>(anxietyTotal.get(bin));
+        }else {
+            anxietyNew = new ArrayList<>();
+            gsrNew = new ArrayList<>();
+            sktNew = new ArrayList<>();
+            hrNew = new ArrayList<>();
+            hrvNew = new ArrayList<>();
+        }
 
+        gsrNew.add(gsr);
+        sktNew.add(skt);
+        hrNew.add(hr);
+        hrvNew.add(hrv);
+        anxietyNew.add(anxietyLvl);
+
+        gsrTotal.put(bin, gsrNew);
+        sktTotal.put(bin, sktNew);
+        hrTotal.put(bin, hrNew);
+        hrvTotal.put(bin, hrvNew);
+        anxietyTotal.put(bin, anxietyNew);
+
+        showValues(gsr,skt,hr,hrv,anxietyLvl);
+    }
+
+    public void showValues(int gsr, int skt, int hr, int hrv, int anxietyLvl){
         gsrText.setText("GSR : " + gsr);
         sktText.setText("SKT : " + skt);
         hrText.setText("HR : " + hr);
@@ -222,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.autoRedraw();//***check
         circularGauge.label(1)
-                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>") //currentValue should be Anxiety Level
+                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>")
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
@@ -290,12 +323,14 @@ public class MainActivity extends AppCompatActivity {
         if (!binauralOn) {
             Toast.makeText(this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
             binauralOn = true;
+            binBtn.setActivated(true);
             if (mp == null) {
                 mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
             }
             mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
+                    binBtn.setEnabled(false);
                     mp.release();
                     mp = null;
                 }
@@ -317,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
         if (mp != null) {
             Toast.makeText(this, "Binaural Mode turned Off", Toast.LENGTH_SHORT).show();
             binauralOn = false;
+            binBtn.setActivated(false);
             mp.pause();
         }
     }
@@ -426,11 +462,15 @@ public class MainActivity extends AppCompatActivity {
                         "  }");
 
         anyChartView.setChart(circularGauge);
-
     }
 
-    public static List<Integer> getTotal(String s) {
-        if (s.equals("anxiety")) return anxietyTotal;
+    public static Map<Integer, List<Integer>> getTotal(String s) {
+        if (s.equals("anxiety")){
+            for(int x : anxietyTotal.get(0)){
+                System.out.println("anxiety values: "+x);
+            }
+            return anxietyTotal;
+        }
         else if (s.equals("gsr")) return gsrTotal;
         else if (s.equals("skt")) return sktTotal;
         else if (s.equals("hr")) return hrTotal;
@@ -438,24 +478,56 @@ public class MainActivity extends AppCompatActivity {
         else return anxietyTotal;
     }
 
-    public static double getMO(String s) {
-        List<Integer> list;
-        if (s.equals("anxiety")) list = anxietyTotal;
-        else if (s.equals("gsr")) list = gsrTotal;
-        else if (s.equals("skt")) list = sktTotal;
-        else if (s.equals("hr")) list = hrTotal;
-        else if (s.equals("hrv")) list = hrvTotal;
-        else list = anxietyTotal;
-
-        int sum = 0;
-        for (int i = 0; i < list.size(); i++) {
-            sum += list.get(i);
+    public static Map<Integer, Double> getMO(String s) {
+        List<Integer> set1, set2;
+        Map<Integer,Double> map = new HashMap<Integer,Double>();
+        if (s.equals("anxiety")) {
+            set1 = new ArrayList<>(anxietyTotal.get(0));
+            set2 = new ArrayList<>(anxietyTotal.get(1));
+        } else if (s.equals("gsr")) {
+            set1 = new ArrayList<>(gsrTotal.get(0));
+            set2 = new ArrayList<>(gsrTotal.get(1));
+        } else if (s.equals("skt")) {
+            set1 = new ArrayList<>(sktTotal.get(0));
+            set2 = new ArrayList<>(sktTotal.get(1));
+        } else if (s.equals("hr")) {
+            set1 = new ArrayList<>(hrTotal.get(0));
+            set2 = new ArrayList<>(hrTotal.get(1));
+        } else if (s.equals("hrv")) {
+            set1 = new ArrayList<>(hrvTotal.get(0));
+            set2 = new ArrayList<>(hrvTotal.get(1));
+        } else {
+            set1 = new ArrayList<>(anxietyTotal.get(0));
+            set2 = new ArrayList<>(anxietyTotal.get(1));
         }
-        if (list.size() > 0) {
-            return sum / list.size();
-        } else return 0;
+
+        int sum1 = 0;
+        int sum2 = 0;
+
+        for (int x : set1) {
+            sum1 += x;
+        }
+
+        for (int x : set2) {
+            sum2 += x;
+        }
+
+        if (set1.size() > 0) {
+            System.out.println("*** sum = "+sum1+" setSize = "+set1.size());
+            double mo = sum1/set1.size();
+            map.put(0,mo);
+        } else {
+            map.put(0,0.0);
+        }
+
+        if (set2.size() > 0) {
+            double mo = sum2/set2.size();
+            map.put(1,mo);
+        } else {
+            map.put(1,0.0);
+        }
+
+        return map;
     }
-
-
 }
 

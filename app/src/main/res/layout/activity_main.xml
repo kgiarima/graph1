@@ -151,11 +151,11 @@
         >
 
         <Button
-            android:id="@+id/binauralBtn"
-            android:background="@drawable/sound"
+            android:id="@+id/binBtn"
+            android:background="@drawable/binaural_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1.2"
             android:layout_margin="10dp"
             android:onClick="addBinaural"
             />
@@ -173,10 +173,10 @@
 
         <Button
             android:id="@+id/btBtn"
-            android:background="@drawable/bluetooth_icon_off"
+            android:background="@drawable/bt_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1.2"
             android:layout_margin="5dp"
             android:onClick="btCheck"
             />

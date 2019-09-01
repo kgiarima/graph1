@@ -20,18 +20,21 @@ import com.anychart.enums.TooltipPositionMode;
 import com.anychart.graphics.vector.Stroke;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ResultsActivity extends AppCompatActivity {
 
-    private static double gsr, skt, hr, hrv;
-    private static List<Integer> anxiety, gsrAll, sktAll, hrAll, hrvAll;
+    private static Map<Integer, Double> gsr, skt, hr, hrv;
+    private static Map<Integer, List<Integer>> anxiety, gsrAll, sktAll, hrAll, hrvAll;
     private static Button backBtn;
     private static AnyChartView anyChartView;
     private static TextView gsrText, sktText, hrText, hrvText;
     private static Cartesian cartesian;
     private static MainActivity mainData;
+    private static String gsrTxt, sktTxt, hrTxt, hrvTxt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,50 +49,56 @@ public class ResultsActivity extends AppCompatActivity {
 
         mainData = new MainActivity();
 
-        gsr = mainData.getMO("gsr"); //Avg("gsr");
-        skt = mainData.getMO("skt"); //Avg("skt");
-        hr = mainData.getMO("hr"); //Avg("hr");
-        hrv = mainData.getMO("hrv"); //Avg("hrv");
+        gsr = new HashMap<>(mainData.getMO("gsr")); //Avg("gsr");
+        skt = new HashMap<>(mainData.getMO("skt")); //Avg("skt");
+        hr = new HashMap<>(mainData.getMO("hr")); //Avg("hr");
+        hrv = new HashMap<>(mainData.getMO("hrv")); //Avg("hrv");
 
-        anxiety = mainData.getTotal("anxiety");
-        gsrAll = mainData.getTotal("gsr");
-        sktAll = mainData.getTotal("skt");
-        hrAll = mainData.getTotal("hr");
-        hrvAll = mainData.getTotal("hrv");
+        anxiety = new HashMap<Integer, List<Integer>>(mainData.getTotal("anxiety"));
+        gsrAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("gsr"));
+        sktAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("skt"));
+        hrAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("hr"));
+        hrvAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("hrv"));
 
-        gsrText.setText("GSR : "+gsr);
-        sktText.setText("SKT : "+skt);
-        hrText.setText("HR : "+hr);
-        hrvText.setText("HRV : "+hrv);
-
+        setMoValues();
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
-
         setGraph("anxiety");
     }
 
-    public void setGraph(String choice){
+    private void setMoValues() {
+        gsrTxt = ("GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
+        sktTxt = ("SKT \nNo Binaural : " + skt.get(0) + "\nAlpha Binaural : " + skt.get(1));
+        hrTxt = ("HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
+        hrvTxt = ("HRV \nNo Binaural : " + hrv.get(0) + "\nAlpha Binaural : " + hrv.get(1));
+        gsrText.setText(gsrTxt);
+        sktText.setText(sktTxt);
+        hrText.setText(hrTxt);
+        hrvText.setText(hrvTxt);
+    }
 
-        List<Integer> graph;
+    public void setGraph(String choice) {
+
+        Map<Integer, List<Integer>> graph;
         String title = "";
 
-        if(choice.equals("anxiety")){
-            graph = anxiety;
+        if (choice.equals("anxiety")) {
+            graph = new HashMap<Integer, List<Integer>>(anxiety);
             title = "Anxiety Level";
-        }else if(choice.equals("gsr")){
-            graph = gsrAll;
+        } else if (choice.equals("gsr")) {
+            graph = new HashMap<Integer, List<Integer>>(gsrAll);
             title = "GSR Level";
-        }else if(choice.equals("skt")){
-            graph = sktAll;
+        } else if (choice.equals("skt")) {
+            graph = new HashMap<Integer, List<Integer>>(sktAll);
             title = "SKT Level";
-        }else if(choice.equals("hr")){
-            graph = hrAll;
+        } else if (choice.equals("hr")) {
+            graph = new HashMap<Integer, List<Integer>>(hrAll);
             title = "HR Level";
-        }else if(choice.equals("hrv")){
-            graph = hrvAll;
+        } else if (choice.equals("hrv")) {
+            graph = new HashMap<Integer, List<Integer>>(hrvAll);
             title = "HRV Level";
-        }else{
-            graph = anxiety;
+        } else {
+            graph = new HashMap<Integer, List<Integer>>(anxiety);
             title = "Anxiety Level";
         }
 
@@ -113,14 +122,15 @@ public class ResultsActivity extends AppCompatActivity {
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-        for(int i=0; i<graph.size();i++) {
-            seriesData.add(new CustomDataEntry(""+i, graph.get(i)));
+        for (int i = 0; i < graph.size(); i++) {
+            seriesData.add(new CustomDataEntry("" + i, graph.get(0).get(i)));
+            //seriesData.add(new CustomDataEntry(""+i, graph.get(1).get(i)));
         }
 
-          Set set = Set.instantiate();
-          set.instantiate();
-          set.data(seriesData);
-          Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
+        Set set = Set.instantiate();
+        set.instantiate();
+        set.data(seriesData);
+        Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
 //        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
@@ -167,20 +177,17 @@ public class ResultsActivity extends AppCompatActivity {
         anyChartView.setChart(cartesian);
     }
 
-
     public void goBack(View view) {
         finish();
     }
 
     public class CustomDataEntry extends ValueDataEntry {
-
         CustomDataEntry(String x, Number value) {
             super(x, value);
         }
-
     }
 
-    public void showGsr(View view){
+    public void showGsr(View view) {
         anyChartView.clear();
         setGraph("gsr");
     }
@@ -190,15 +197,15 @@ public class ResultsActivity extends AppCompatActivity {
         setGraph("hrv");
     }
 
-    public void showSkt(View view){
+    public void showSkt(View view) {
         anyChartView.clear();
         setGraph("skt");
     }
 
-    public void showHr(View view){
+    public void showHr(View view) {
         anyChartView.clear();
         setGraph("hr");
     }
 
-    }
+}
 
