@@ -34,11 +34,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import weka.classifiers.Classifier;
+
 public class MainActivity extends AppCompatActivity {
 
     private static Random r;
     private static int anxietyLvl, gsr, skt, hr, hrv;
-    private static Map<Integer, List<Integer>> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal; // Map<0,List> for no binaural, Map<1,List> for Alpha waves
+    private static List<Integer> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal;
+    private static List<Integer> anxietyTotal2, gsrTotal2, hrTotal2, hrvTotal2, sktTotal2;
     private static Button startBtn, btBtn, binBtn, gsrDot, sktDot, hrDot, hrvDot;
     private static boolean isRunning, deviceFound, isConnected, binauralOn;
     private static AnyChartView anyChartView;
@@ -55,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     InputStream mInputStream;
     Thread workerThread;
     volatile boolean stopWorker;
+
+    Classifier cls;
 
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -77,11 +82,16 @@ public class MainActivity extends AppCompatActivity {
         deviceFound = false;
         isConnected = false;
 
-        anxietyTotal = new HashMap<Integer, List<Integer>>();
-        gsrTotal = new HashMap<Integer, List<Integer>>();
-        hrTotal = new HashMap<Integer, List<Integer>>();
-        hrvTotal = new HashMap<Integer, List<Integer>>();
-        sktTotal = new HashMap<Integer, List<Integer>>();
+        anxietyTotal = new ArrayList<Integer>();
+        gsrTotal = new ArrayList<Integer>();
+        hrTotal = new ArrayList<Integer>();
+        hrvTotal = new ArrayList<Integer>();
+        sktTotal = new ArrayList<Integer>();
+        anxietyTotal2 = new ArrayList<Integer>();
+        gsrTotal2 = new ArrayList<Integer>();
+        hrTotal2 = new ArrayList<Integer>();
+        hrvTotal2 = new ArrayList<Integer>();
+        sktTotal2 = new ArrayList<Integer>();
 
         startBtn = (Button) findViewById(R.id.startBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
@@ -97,30 +107,36 @@ public class MainActivity extends AppCompatActivity {
         hrText = (TextView) findViewById(R.id.hrTextView);
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
+        try {
+            cls = (Classifier) weka.core.SerializationHelper.read(getAssets().open("randomforest_31.model"));
+        }catch (Exception e){
+            System.out.println(e);
+        }
         anyChartView = findViewById(R.id.any_chart_view);
     }
+
 
     public void btCheck(View view) {
 
         if (isConnected) {
             try {
-                mInputStream.close();
-                mSocket.close();
-                btBtn.setActivated(false);
                 isRunning = false;
                 isConnected = false;
-                Toast.makeText(MainActivity.this, "Connection was closed!", Toast.LENGTH_SHORT).show();
+                btBtn.setActivated(false);
+
+                mInputStream.close();
+                mSocket.close();
+
                 startBtn.setText("Start");
-                gsrDot.setBackgroundResource(R.drawable.dot_red);
-                sktDot.setBackgroundResource(R.drawable.dot_red);
-                hrDot.setBackgroundResource(R.drawable.dot_red);
-                hrvDot.setBackgroundResource(R.drawable.dot_red);
+                setDots(false); //make signal dots red
+                Toast.makeText(MainActivity.this, "Connection was closed!", Toast.LENGTH_SHORT).show();
             } catch (IOException ex) {
                 Toast.makeText(MainActivity.this, "Error while closing the connection", Toast.LENGTH_SHORT).show();
             }
         } else {
             if (bluetoothAdapter.isEnabled()) {
 
+                //check if device is paired with the phone
                 Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
                 for (BluetoothDevice bt : pairedDevices) {
                     if (bt.getName().equals("RN42-CD05")) {
@@ -128,43 +144,54 @@ public class MainActivity extends AppCompatActivity {
                         deviceFound = true;
                         break;
                     }
-                    Toast.makeText(MainActivity.this, "Arduino device is not paired with the phone", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Device is not paired with the phone", Toast.LENGTH_SHORT).show();
                 }
 
-                //device is paired with the phone
+                //device is paired with the phone, now we should connect to it
                 if (deviceFound) {
-                    //try to establish a connection
-                    boolean con = connect();
+                    try {
+                        // Orismos UUID gia seiriaki metafora dedomenwn
+                        UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard Serial Port Service ID
+                        mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
+                        mSocket.connect();
+                        mInputStream = mSocket.getInputStream();
 
-                    if (!con) {
-                        Toast.makeText(MainActivity.this, "Device could not connect!", Toast.LENGTH_SHORT).show();
-                    } else {
                         isConnected = true;
                         Toast.makeText(MainActivity.this, "Device connected!", Toast.LENGTH_SHORT).show();
                         btBtn.setActivated(true);
-                        gsrDot.setBackgroundResource(R.drawable.dot_green);
-                        sktDot.setBackgroundResource(R.drawable.dot_green);
-                        hrDot.setBackgroundResource(R.drawable.dot_green);
-                        hrvDot.setBackgroundResource(R.drawable.dot_green);
+                        setDots(true);
+                    } catch (IOException ex) {
+                        Toast.makeText(MainActivity.this, "Device could not connect!", Toast.LENGTH_SHORT).show();
                     }
                 }
             } else {
-                Toast.makeText(MainActivity.this, "Bluetooth is off", Toast.LENGTH_SHORT);
+                Toast.makeText(MainActivity.this, "Please turn on the Bluetooth first", Toast.LENGTH_SHORT);
             }
         }
     }
 
-    public boolean connect() {
-        try {
-            // Orismos UUID gia seiriaki metafora dedomenwn
-            UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"); //Standard Serial Port Service ID
+    public void start(View view) {
 
-            mSocket = mDevice.createRfcommSocketToServiceRecord(uuid);
-            mSocket.connect();
-            mInputStream = mSocket.getInputStream();
-            return true;
-        } catch (IOException ex) {
-            return false;
+        if (!isConnected) { // if device is not connected show message
+            Toast.makeText(MainActivity.this, "Device is not connected", Toast.LENGTH_SHORT).show();
+        } else if (!isRunning && isConnected) { // if connected and not running already start listening for data
+            isRunning = true;
+            startBtn.setText("Stop");
+            beginListenForData();
+        } else { // if connected and have already been running stop and show the results
+            stopWorker = true;
+            isRunning = false;
+            startBtn.setText("Start");
+
+            if(binauralOn) {
+                pauseBinaural();
+            }
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {}
+
+            startActivity(new Intent(MainActivity.this, ResultsActivity.class));
         }
     }
 
@@ -179,23 +206,22 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                         BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
-                        String line = null;
+                        String line;
                         while ((line = in.readLine()) != null) {
                             if (stopWorker) {
                                 break;
                             }
                             final String tempLine = line;
-                            System.out.println("****** 202 data: " + tempLine);
+                            // System.out.println("****** 202 data: " + tempLine);
                             String[] data = tempLine.split("\\s*,\\s*");
-                            String status = data[0];
-                            int statusCheck = checkHealthStatus(status);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
+                            int statusCheck = checkHealthStatus(data[0]);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
 
                             if (statusCheck == 0) {
-
                                 gsr = (int) Double.parseDouble(data[2]);
                                 skt = (int) Double.parseDouble(data[7]);
                                 hr = (int) Double.parseDouble(data[8]);
                                 hrv = (int) Double.parseDouble(data[9]);
+
                                 anxietyLvl = r.nextInt(100);
 
                                 updateValues(gsr, skt, hr, hrv, anxietyLvl);
@@ -212,39 +238,22 @@ public class MainActivity extends AppCompatActivity {
         workerThread.start();
     }
 
-    public void updateValues(int gsr, int skt, int hr, int hrv, int anxietyLvl) {
-        int bin = 0;
+    public void updateValues(int gsrN, int sktN, int hrN, int hrvN, int anxietyN) {
+
         if (binauralOn) {
-            bin = 1;
+            gsrTotal2.add(gsrN);
+            sktTotal2.add(sktN);
+            hrTotal2.add(hrN);
+            hrvTotal2.add(hrvN);
+            anxietyTotal2.add(anxietyN);
+        }else{
+            gsrTotal.add(gsrN);
+            sktTotal.add(sktN);
+            hrTotal.add(hrN);
+            hrvTotal.add(hrvN);
+            anxietyTotal.add(anxietyN);
         }
-
-        if(!(gsrTotal.get(bin)==null)){
-            anxietyNew = new ArrayList<>(gsrTotal.get(bin));
-            gsrNew = new ArrayList<>(sktTotal.get(bin));
-            sktNew = new ArrayList<>(hrTotal.get(bin));
-            hrNew = new ArrayList<>(hrvTotal.get(bin));
-            hrvNew = new ArrayList<>(anxietyTotal.get(bin));
-        }else {
-            anxietyNew = new ArrayList<>();
-            gsrNew = new ArrayList<>();
-            sktNew = new ArrayList<>();
-            hrNew = new ArrayList<>();
-            hrvNew = new ArrayList<>();
-        }
-
-        gsrNew.add(gsr);
-        sktNew.add(skt);
-        hrNew.add(hr);
-        hrvNew.add(hrv);
-        anxietyNew.add(anxietyLvl);
-
-        gsrTotal.put(bin, gsrNew);
-        sktTotal.put(bin, sktNew);
-        hrTotal.put(bin, hrNew);
-        hrvTotal.put(bin, hrvNew);
-        anxietyTotal.put(bin, anxietyNew);
-
-        showValues(gsr,skt,hr,hrv,anxietyLvl);
+        showValues(gsrN,sktN,hrN,hrvN,anxietyN);
     }
 
     public void showValues(int gsr, int skt, int hr, int hrv, int anxietyLvl){
@@ -263,38 +272,22 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.autoRedraw();//***check
     }
 
-    public void start(View view) {
-        //if procedure has not already started and bluetooth is on..
-        if (!isRunning && isConnected) {
-
-            // createChart();
-            isRunning = true;
-            startBtn.setText("Stop");
-
-            beginListenForData();
-
-        } else if (!isRunning && !isConnected) {
-            Toast.makeText(MainActivity.this, "Device is not connected", Toast.LENGTH_SHORT).show();
-        } else {
-            startBtn.setText("Start");
-            stopWorker = true;
-            isRunning = false;
-            pauseBinaural();
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-            }
-
-            startActivity(new Intent(MainActivity.this, ResultsActivity.class));
+    public void setDots(boolean set){
+        if(set){
+            gsrDot.setBackgroundResource(R.drawable.dot_green);
+            sktDot.setBackgroundResource(R.drawable.dot_green);
+            hrDot.setBackgroundResource(R.drawable.dot_green);
+            hrvDot.setBackgroundResource(R.drawable.dot_green);
+        }else{
+            gsrDot.setBackgroundResource(R.drawable.dot_red);
+            sktDot.setBackgroundResource(R.drawable.dot_red);
+            hrDot.setBackgroundResource(R.drawable.dot_red);
+            hrvDot.setBackgroundResource(R.drawable.dot_red);
         }
     }
 
     public int checkHealthStatus(String status) {
-        gsrDot.setBackgroundResource(R.drawable.dot_green);
-        sktDot.setBackgroundResource(R.drawable.dot_green);
-        hrDot.setBackgroundResource(R.drawable.dot_green);
-        hrvDot.setBackgroundResource(R.drawable.dot_green);
+        setDots(true);
 
         if (status.equals("M")) {
             return 0;
@@ -309,10 +302,7 @@ public class MainActivity extends AppCompatActivity {
             sktDot.setBackgroundResource(R.drawable.dot_red);
             return 3;
         } else {
-            gsrDot.setBackgroundResource(R.drawable.dot_red);
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
+            setDots(false);
             return 4;
         }
     }
@@ -321,9 +311,9 @@ public class MainActivity extends AppCompatActivity {
 
         //player.release()
         if (!binauralOn) {
-            Toast.makeText(this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
             binauralOn = true;
             binBtn.setActivated(true);
+            Toast.makeText(this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
             if (mp == null) {
                 mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
             }
@@ -331,6 +321,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
                     binBtn.setEnabled(false);
+                    binauralOn = false;
                     mp.release();
                     mp = null;
                 }
@@ -350,10 +341,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void pauseBinaural() {
         if (mp != null) {
-            Toast.makeText(this, "Binaural Mode turned Off", Toast.LENGTH_SHORT).show();
             binauralOn = false;
             binBtn.setActivated(false);
             mp.pause();
+            Toast.makeText(this, "Binaural Mode is Off", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -464,45 +455,49 @@ public class MainActivity extends AppCompatActivity {
         anyChartView.setChart(circularGauge);
     }
 
-    public static Map<Integer, List<Integer>> getTotal(String s) {
-        if (s.equals("anxiety")){
-            for(int x : anxietyTotal.get(0)){
-                System.out.println("anxiety values: "+x);
-            }
+    public List<Integer> getTotal(String s, int b) {
+        if(b==0) {
+            if (s.equals("anxiety")) return anxietyTotal;
+            else if (s.equals("gsr")) return gsrTotal;
+            else if (s.equals("skt")) return sktTotal;
+            else if (s.equals("hr")) return hrvTotal;
+            else if (s.equals("hrv")) return hrvTotal;
             return anxietyTotal;
+        }else{
+            if (s.equals("anxiety")) return anxietyTotal2;
+            else if (s.equals("gsr")) return gsrTotal2;
+            else if (s.equals("skt")) return sktTotal2;
+            else if (s.equals("hr")) return hrvTotal2;
+            else if (s.equals("hrv")) return hrvTotal2;
+            return anxietyTotal2;
         }
-        else if (s.equals("gsr")) return gsrTotal;
-        else if (s.equals("skt")) return sktTotal;
-        else if (s.equals("hr")) return hrTotal;
-        else if (s.equals("hrv")) return hrvTotal;
-        else return anxietyTotal;
     }
 
-    public static Map<Integer, Double> getMO(String s) {
+    public Map<Integer, Double> getAvg(String s) {
         List<Integer> set1, set2;
         Map<Integer,Double> map = new HashMap<Integer,Double>();
-        if (s.equals("anxiety")) {
-            set1 = new ArrayList<>(anxietyTotal.get(0));
-            set2 = new ArrayList<>(anxietyTotal.get(1));
-        } else if (s.equals("gsr")) {
-            set1 = new ArrayList<>(gsrTotal.get(0));
-            set2 = new ArrayList<>(gsrTotal.get(1));
-        } else if (s.equals("skt")) {
-            set1 = new ArrayList<>(sktTotal.get(0));
-            set2 = new ArrayList<>(sktTotal.get(1));
-        } else if (s.equals("hr")) {
-            set1 = new ArrayList<>(hrTotal.get(0));
-            set2 = new ArrayList<>(hrTotal.get(1));
-        } else if (s.equals("hrv")) {
-            set1 = new ArrayList<>(hrvTotal.get(0));
-            set2 = new ArrayList<>(hrvTotal.get(1));
-        } else {
-            set1 = new ArrayList<>(anxietyTotal.get(0));
-            set2 = new ArrayList<>(anxietyTotal.get(1));
-        }
-
         int sum1 = 0;
         int sum2 = 0;
+
+        if (s.equals("anxiety")) {
+            set1 = anxietyTotal;
+            set2 = anxietyTotal2;
+        } else if (s.equals("gsr")) {
+            set1 = gsrTotal;
+            set2 = gsrTotal2;
+        } else if (s.equals("skt")) {
+            set1 = sktTotal;
+            set2 = sktTotal2;
+        } else if (s.equals("hr")) {
+            set1 = hrTotal;
+            set2 = hrTotal2;
+        } else if (s.equals("hrv")) {
+            set1 = hrvTotal;
+            set2 = hrvTotal2;
+        } else{
+            set1 = anxietyTotal;
+            set2 = anxietyTotal2;
+        }
 
         for (int x : set1) {
             sum1 += x;
@@ -513,7 +508,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (set1.size() > 0) {
-            System.out.println("*** sum = "+sum1+" setSize = "+set1.size());
             double mo = sum1/set1.size();
             map.put(0,mo);
         } else {

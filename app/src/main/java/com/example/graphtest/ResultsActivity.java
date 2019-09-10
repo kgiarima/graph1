@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anychart.AnyChart;
 import com.anychart.AnyChartView;
@@ -27,8 +28,9 @@ import java.util.Map;
 
 public class ResultsActivity extends AppCompatActivity {
 
-    private static Map<Integer, Double> gsr, skt, hr, hrv;
-    private static Map<Integer, List<Integer>> anxiety, gsrAll, sktAll, hrAll, hrvAll;
+    private static Map<Integer, Double> gsr, skt, hr, hrv, anxiety;
+    private static List<Integer> anxietyAll, gsrAll, sktAll, hrAll, hrvAll;
+    private static List<Integer> anxietyAll2, gsrAll2, sktAll2, hrAll2, hrvAll2;
     private static Button backBtn;
     private static AnyChartView anyChartView;
     private static TextView gsrText, sktText, hrText, hrvText;
@@ -49,28 +51,35 @@ public class ResultsActivity extends AppCompatActivity {
 
         mainData = new MainActivity();
 
-        gsr = new HashMap<>(mainData.getMO("gsr")); //Avg("gsr");
-        skt = new HashMap<>(mainData.getMO("skt")); //Avg("skt");
-        hr = new HashMap<>(mainData.getMO("hr")); //Avg("hr");
-        hrv = new HashMap<>(mainData.getMO("hrv")); //Avg("hrv");
+        gsr = new HashMap<>(mainData.getAvg("gsr")); //Avg("gsr");
+        skt = new HashMap<>(mainData.getAvg("skt")); //Avg("skt");
+        hr = new HashMap<>(mainData.getAvg("hr")); //Avg("hr");
+        hrv = new HashMap<>(mainData.getAvg("hrv")); //Avg("hrv");
+        anxiety = new HashMap<>(mainData.getAvg("anxiety")); //Avg("anxiety");
 
-        anxiety = new HashMap<Integer, List<Integer>>(mainData.getTotal("anxiety"));
-        gsrAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("gsr"));
-        sktAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("skt"));
-        hrAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("hr"));
-        hrvAll = new HashMap<Integer, List<Integer>>(mainData.getTotal("hrv"));
+        anxietyAll = new ArrayList<>(mainData.getTotal("anxietyAll",0));
+        gsrAll = new ArrayList<>(mainData.getTotal("gsr",0));
+        sktAll = new ArrayList<>(mainData.getTotal("skt",0));
+        hrAll = new ArrayList<>(mainData.getTotal("hr",0));
+        hrvAll = new ArrayList<>(mainData.getTotal("hrv",0));
 
-        setMoValues();
+        anxietyAll2 = new ArrayList<>(mainData.getTotal("anxietyAll",1));
+        gsrAll2 = new ArrayList<>(mainData.getTotal("gsr",1));
+        sktAll2 = new ArrayList<>(mainData.getTotal("skt",1));
+        hrAll2 = new ArrayList<>(mainData.getTotal("hr",1));
+        hrvAll2 = new ArrayList<>(mainData.getTotal("hrv",1));
+
+        setAvgValues();
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
-        setGraph("anxiety");
+        setGraph("anxietyAll");
     }
 
-    private void setMoValues() {
-        gsrTxt = ("GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
-        sktTxt = ("SKT \nNo Binaural : " + skt.get(0) + "\nAlpha Binaural : " + skt.get(1));
-        hrTxt = ("HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
-        hrvTxt = ("HRV \nNo Binaural : " + hrv.get(0) + "\nAlpha Binaural : " + hrv.get(1));
+    private void setAvgValues() {
+        gsrTxt = ("Avg GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
+        sktTxt = ("Avg SKT \nNo Binaural : " + skt.get(0) + "\nAlpha Binaural : " + skt.get(1));
+        hrTxt =  ("Avg HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
+        hrvTxt = ("Avg HRV \nNo Binaural : " + hrv.get(0) + "\nAlpha Binaural : " + hrv.get(1));
         gsrText.setText(gsrTxt);
         sktText.setText(sktTxt);
         hrText.setText(hrTxt);
@@ -79,26 +88,32 @@ public class ResultsActivity extends AppCompatActivity {
 
     public void setGraph(String choice) {
 
-        Map<Integer, List<Integer>> graph;
-        String title = "";
+        List<Integer> graph, graph2;
+        String title;
 
-        if (choice.equals("anxiety")) {
-            graph = new HashMap<Integer, List<Integer>>(anxiety);
+        if (choice.equals("anxietyAll")) {
+            graph = new ArrayList<>(anxietyAll);
+            graph2 = new ArrayList<>(anxietyAll2);
             title = "Anxiety Level";
         } else if (choice.equals("gsr")) {
-            graph = new HashMap<Integer, List<Integer>>(gsrAll);
+            graph = new ArrayList<>(gsrAll);
+            graph2 = new ArrayList<>(gsrAll2);
             title = "GSR Level";
         } else if (choice.equals("skt")) {
-            graph = new HashMap<Integer, List<Integer>>(sktAll);
+            graph = new ArrayList<>(sktAll);
+            graph2 = new ArrayList<>(sktAll2);
             title = "SKT Level";
         } else if (choice.equals("hr")) {
-            graph = new HashMap<Integer, List<Integer>>(hrAll);
+            graph = new ArrayList<>(hrAll);
+            graph2 = new ArrayList<>(hrAll2);
             title = "HR Level";
         } else if (choice.equals("hrv")) {
-            graph = new HashMap<Integer, List<Integer>>(hrvAll);
+            graph = new ArrayList<>(hrvAll);
+            graph2 = new ArrayList<>(hrvAll2);
             title = "HRV Level";
         } else {
-            graph = new HashMap<Integer, List<Integer>>(anxiety);
+            graph = new ArrayList<>(anxietyAll);
+            graph2 = new ArrayList<>(anxietyAll2);
             title = "Anxiety Level";
         }
 
@@ -122,20 +137,20 @@ public class ResultsActivity extends AppCompatActivity {
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-        for (int i = 0; i < graph.size(); i++) {
-            seriesData.add(new CustomDataEntry("" + i, graph.get(0).get(i)));
-            //seriesData.add(new CustomDataEntry(""+i, graph.get(1).get(i)));
+        for (int i = 0; graph.size()>graph2.size()?i < graph.size():i<graph2.size(); i++) {
+            seriesData.add(new CustomDataEntry("" + i, graph.get(i)!=null?graph.get(i):0,graph2.get(i)!=null?graph2.get(i):0));
         }
+
 
         Set set = Set.instantiate();
         set.instantiate();
         set.data(seriesData);
         Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
-//        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
+        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
-        series1.name(title);
+        series1.name(title+"w/o binaural");
         series1.hovered().markers().enabled(true);
         series1.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -146,17 +161,17 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetX(5d)
                 .offsetY(5d);
 
-//        Line series2 = cartesian.line(series2Mapping);
-//        series2.name("Whiskey");
-//        series2.hovered().markers().enabled(true);
-//        series2.hovered().markers()
-//                .type(MarkerType.CIRCLE)
-//                .size(4d);
-//        series2.tooltip()
-//                .position("right")
-//                .anchor(Anchor.LEFT_CENTER)
-//                .offsetX(5d)
-//                .offsetY(5d);
+        Line series2 = cartesian.line(series2Mapping);
+        series2.name(title+"w binaural");
+        series2.hovered().markers().enabled(true);
+        series2.hovered().markers()
+                .type(MarkerType.CIRCLE)
+                .size(4d);
+        series2.tooltip()
+                .position("right")
+                .anchor(Anchor.LEFT_CENTER)
+                .offsetX(5d)
+                .offsetY(5d);
 //
 //        Line series3 = cartesian.line(series3Mapping);
 //        series3.name("Tequila");
@@ -182,8 +197,10 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     public class CustomDataEntry extends ValueDataEntry {
-        CustomDataEntry(String x, Number value) {
+        CustomDataEntry(String x, Number value, Number value2) {
+
             super(x, value);
+            setValue("value2", value2);
         }
     }
 
