@@ -24,12 +24,8 @@ public class DbActivity {
 
     private Connection conn = null;
 
-
-
-
     public DbActivity()
     {
-
 
         try
         {
@@ -65,21 +61,13 @@ public class DbActivity {
             //Close the input stream
             in.close();
 
-
         }
         catch (Exception e)
         {//Catch exception if any
             System.err.println("Error: " + e.getMessage());
         }
 
-
-
-
     }
-
-
-
-
 
     public void dbopen()
     {
@@ -87,11 +75,8 @@ public class DbActivity {
         try
         {
 
-
-
             Class.forName(driver).newInstance();
             conn = DriverManager.getConnection(url+dbName,userName,passwd);
-
 
         }
         catch (Exception e)
@@ -99,10 +84,6 @@ public class DbActivity {
             e.printStackTrace();
         }
     }
-
-
-
-
 
     public void dbclose()
     {
@@ -153,7 +134,6 @@ public class DbActivity {
 
     }
 
-
     public void InsRecords(String query)
     {
 
@@ -196,8 +176,6 @@ public class DbActivity {
             //Step 3 : SQL Query
             //String updatequery="UPDATE ITEM SET PRODUCT='UsbCable' Where ID=1";
 
-
-
             //Step 4 : Run Query
 
             stmt.executeUpdate(query);
@@ -219,16 +197,12 @@ public class DbActivity {
 
     public void DelRecords(String query)
     {
-
         Statement stmt = null;
 
         try
         {
-
-
             dbopen();
             stmt=conn.createStatement();
-
 
             stmt.executeUpdate(query);
             System.out.println("Records Deleted Successfully");
@@ -244,6 +218,5 @@ public class DbActivity {
             System.out.println("Closing the connection.");
             if (conn != null) try { conn.close(); } catch (SQLException ignore) {}
         }
-
     }
 }

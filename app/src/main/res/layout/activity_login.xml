@@ -12,7 +12,7 @@
     >
 
     <EditText
-        android:id="@+id/usernameTxt"
+        android:id="@+id/userTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -22,7 +22,7 @@
         android:gravity="center"/>
 
     <EditText
-        android:id="@+id/passwordTxt"
+        android:id="@+id/passTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
