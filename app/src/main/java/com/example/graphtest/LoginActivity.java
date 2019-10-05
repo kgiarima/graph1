@@ -32,6 +32,7 @@ public class LoginActivity extends AppCompatActivity {
 
         user =  (EditText) findViewById(R.id.userTxt);
         pass =  (EditText) findViewById(R.id.passTxt);
+        pass =  (EditText) findViewById(R.id.passTxt);
         login = (Button) findViewById(R.id.loginBtn);
 
         users = new HashMap<>();
