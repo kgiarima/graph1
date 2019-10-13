@@ -21,6 +21,8 @@ import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,18 +58,18 @@ public class MainActivity extends AppCompatActivity {
 
     // weka
     // model attributes
-    final Attribute x1 = new Attribute("gsr");
-    final Attribute x2 = new Attribute("ampl");
-    final Attribute x3 =new Attribute("latency");
-    final Attribute x4 =new Attribute("tempe");
-    final Attribute x5 =new Attribute("hr");
-    final Attribute x6 =new Attribute("hrv");
-    final Attribute result = new Attribute("result");
+    private Attribute x1 = new Attribute("gsr");
+    private Attribute x2 = new Attribute("ampl");
+    private Attribute x3 =new Attribute("latency");
+    private Attribute x4 =new Attribute("tempe");
+    private Attribute x5 =new Attribute("hr");
+    private Attribute x6 =new Attribute("hrv");
+    private Attribute result = new Attribute("result");
 
 
     // class attribute
-    final List<String> EmoLabel = new ArrayList<String>() {};
-    final Attribute attributeClass = new Attribute("@@class@@", EmoLabel);
+    private List<String> EmoLabel = new ArrayList<String>() {};
+    private Attribute attributeClass = new Attribute("@@class@@", EmoLabel);
     // rest
     private ArrayList<Attribute> attributeList;
     private Instances dataUnpredicted;
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     InputStream mInputStream;
     Thread workerThread;
     volatile boolean stopWorker;
+
+    BufferedWriter writer;
 
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -111,12 +115,20 @@ public class MainActivity extends AppCompatActivity {
         dataUnpredicted = new Instances("TestInstances",attributeList, 1);
         // last feature is target variable
         dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
+        // import ready trained model
+        cls = null;
+        try {
+            cls = (RandomForest) weka.core.SerializationHelper //(Classifier) instead of RandForest
+                    .read(getAssets().open("randomforest_31.model"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private Double predict(final int v1, final int v2, final int v3,final int v4,final int v5,final int v6){
 
         // **** create new instance: this should be set with all values from arduino
-        DenseInstance newDataInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
+        DenseInstance newInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
             {
                 setValue(x1, v1);
                 setValue(x2, v5);
@@ -127,25 +139,14 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         // instance to use in prediction
-        DenseInstance newInstance = newDataInstance;
+        // DenseInstance newInstance = newDataInstance;
         // reference to dataset
         newInstance.setDataset(dataUnpredicted);
-
-        // import ready trained model
-        Classifier cls = null;
-        try {
-            cls = (RandomForest) weka.core.SerializationHelper //(Classifier) instead of RandForest
-                    .read(getAssets().open("randomforest_31.model"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (cls == null)
-            return null;
 
         // predict new sample
         try {
             double result = cls.classifyInstance(newInstance); //newInstance.instance(0)
-            System.out.println("Index of predicted class label: " + result + ", which corresponds to class: " + EmoLabel.get(new Double(result).intValue()));
+            System.out.println("*** 146 Index of predicted class label: " + result + ", which corresponds to class: " + EmoLabel.get(new Double(result).intValue()));
             //String prediction = AttributeClass.result((int)value);
 
 //            predict = gp.classifyInstance(isTest.instance(i));
@@ -201,13 +202,12 @@ public class MainActivity extends AppCompatActivity {
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
         try {
-            cls = (Classifier) weka.core.SerializationHelper.read(getAssets().open("randomforest_31.model"));
+            cls = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("randomforest_31.model"));
         }catch (Exception e){
             System.out.println(e);
         }
         anyChartView = findViewById(R.id.any_chart_view);
     }
-
 
     public void btCheck(View view) {
 
@@ -293,6 +293,7 @@ public class MainActivity extends AppCompatActivity {
         stopWorker = false;
         workerThread = new Thread(new Runnable() {
             public void run() {
+
                 while (!Thread.currentThread().isInterrupted() && !stopWorker) {
                     try {
                         if (stopWorker) {
@@ -317,7 +318,11 @@ public class MainActivity extends AppCompatActivity {
                                 amp = (int) Double.parseDouble(data[8]);
                                 lat = (int) Double.parseDouble(data[9]);
 
-                                anxietyLvl = (int) predict(gsr,skt,hr,hrv,amp,lat).intValue();
+                                String str = ("*** data samples: gsr-"+gsr+" | skt-"+skt+" | hr-"+hr+" | hrv-"+hrv+" | amp-"+amp+" | lat-"+lat);
+                                System.out.println(str);
+
+                                //anxietyLvl = (int) predict(gsr,skt,hr,hrv,amp,lat).intValue();
+                                anxietyLvl = 30;
 
                                 updateValues(gsr, skt, hr, hrv, anxietyLvl);
                             } else{
