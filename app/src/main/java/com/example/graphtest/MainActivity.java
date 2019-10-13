@@ -73,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
     private Instances dataUnpredicted;
     private Classifier cls;
 
+    private WekaML wk;
+
     //arduino
     BluetoothAdapter bluetoothAdapter;
     ArrayList<String> devices;
@@ -88,80 +90,82 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialize();
-        initializeWeka();
+        //initializeWeka();
         createChart();
     }
 
-    private void initializeWeka() {
+//    private void initializeWeka() {
+//
+////        original was <>(2)
+//        attributeList = new ArrayList<Attribute>() {
+//            {
+//                add(x1);
+//                add(x2);
+//                add(x3);
+//                add(x4);
+//                add(x5);
+//                add(x6);
+//                add(result);
+//                // add(attributeClass);
+//            }
+//        };
+//        // unpredicted data sets (reference to sample structure for new instances)
+//        dataUnpredicted = new Instances("TestInstances",attributeList, 1);
+//        // last feature is target variable
+//        dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
+//    }
 
-//        original was <>(2)
-        attributeList = new ArrayList<Attribute>() {
-            {
-                add(x1);
-                add(x2);
-                add(x3);
-                add(x4);
-                add(x5);
-                add(x6);
-                add(result);
-                // add(attributeClass);
-            }
-        };
-        // unpredicted data sets (reference to sample structure for new instances)
-        dataUnpredicted = new Instances("TestInstances",attributeList, 1);
-        // last feature is target variable
-        dataUnpredicted.setClassIndex(dataUnpredicted.numAttributes() - 1);
-    }
-
-    private Double predict(final int v1, final int v2, final int v3,final int v4,final int v5,final int v6){
-
-        // **** create new instance: this should be set with all values from arduino
-        DenseInstance newDataInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
-            {
-                setValue(x1, v1);
-                setValue(x2, v5);
-                setValue(x3, v6);
-                setValue(x4, v2);
-                setValue(x5, v3);
-                setValue(x6, v4);
-            }
-        };
-        // instance to use in prediction
-        DenseInstance newInstance = newDataInstance;
-        // reference to dataset
-        newInstance.setDataset(dataUnpredicted);
-
-        // import ready trained model
-        Classifier cls = null;
-        try {
-            cls = (RandomForest) weka.core.SerializationHelper //(Classifier) instead of RandForest
-                    .read(getAssets().open("randomforest_31.model"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (cls == null)
-            return null;
-
-        // predict new sample
-        try {
-            double result = cls.classifyInstance(newInstance); //newInstance.instance(0)
-            System.out.println("Index of predicted class label: " + result + ", which corresponds to class: " + EmoLabel.get(new Double(result).intValue()));
-            //String prediction = AttributeClass.result((int)value);
-
-//            predict = gp.classifyInstance(isTest.instance(i));
-//            System.out.println("outcome "+predict);
-//            double[] p = gp.distributionForInstance(isTest.instance(i));
-//            System.out.println(Arrays.toString(p));
-//            System.out.print("given value: " + isTest.classAttribute().value((int) isTest.instance(i).classValue()));
-//            System.out.println("---predicted value: " + isTest.classAttribute().value((int) predict));
-//            prediction = isTest.classAttribute().value((int) predict);
-            //result = Double.parseDouble(prediction);
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
+//    private Double predict(final int v1, final int v2, final int v3,final int v4,final int v5,final int v6){
+//
+//        System.out.println("**** 118 predict");
+//        // **** create new instance: this should be set with all values from arduino
+//        DenseInstance newDataInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
+//            {
+//                setValue(x1, v1);
+//                setValue(x2, v5);
+//                setValue(x3, v6);
+//                setValue(x4, v2);
+//                setValue(x5, v3);
+//                setValue(x6, v4);
+//            }
+//        };
+//        // instance to use in prediction
+//        DenseInstance newInstance = newDataInstance;
+//        // reference to dataset
+//        newInstance.setDataset(dataUnpredicted);
+//
+//        // import ready trained model
+//        Classifier cls = null;
+//        try {
+//            cls = (RandomForest) weka.core.SerializationHelper //(Classifier) instead of RandForest
+//                    .read(getAssets().open("randomforest_31.model"));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        if (cls == null)
+//            return null;
+//
+//        System.out.println("**** 146 predict");
+//        // predict new sample
+//        try {
+//            double result = cls.classifyInstance(newInstance); //newInstance.instance(0)
+//            System.out.println("*** Index of predicted class label: " + result + ", which corresponds to class: " + EmoLabel.get(new Double(result).intValue()));
+//            //String prediction = AttributeClass.result((int)value);
+//
+////            predict = gp.classifyInstance(isTest.instance(i));
+////            System.out.println("outcome "+predict);
+////            double[] p = gp.distributionForInstance(isTest.instance(i));
+////            System.out.println(Arrays.toString(p));
+////            System.out.print("given value: " + isTest.classAttribute().value((int) isTest.instance(i).classValue()));
+////            System.out.println("---predicted value: " + isTest.classAttribute().value((int) predict));
+////            prediction = isTest.classAttribute().value((int) predict);
+//            //result = Double.parseDouble(prediction);
+//            return result;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return null;
+//    }
 
     private void initialize() {
 
@@ -200,11 +204,8 @@ public class MainActivity extends AppCompatActivity {
         hrText = (TextView) findViewById(R.id.hrTextView);
         hrvText = (TextView) findViewById(R.id.hrvTextView);
 
-        try {
-            cls = (Classifier) weka.core.SerializationHelper.read(getAssets().open("randomforest_31.model"));
-        }catch (Exception e){
-            System.out.println(e);
-        }
+        wk = new WekaML();
+
         anyChartView = findViewById(R.id.any_chart_view);
     }
 
@@ -317,7 +318,8 @@ public class MainActivity extends AppCompatActivity {
                                 amp = (int) Double.parseDouble(data[8]);
                                 lat = (int) Double.parseDouble(data[9]);
 
-                                anxietyLvl = (int) predict(gsr,skt,hr,hrv,amp,lat).intValue();
+                                System.out.println("**** 321 ready to predict");
+                                anxietyLvl = (int) wk.predict(gsr,skt,hr,hrv,amp,lat).intValue();
 
                                 updateValues(gsr, skt, hr, hrv, anxietyLvl);
                             } else{
