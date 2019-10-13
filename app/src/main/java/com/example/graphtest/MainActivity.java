@@ -313,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
                             if (statusCheck == 0) {
                                 gsr = (int) Double.parseDouble(data[2]);
                                 skt = (int) Double.parseDouble(data[7]);
-                                hr = (int) Double.parseDouble(data[8]);
+                                hr =  (int) Double.parseDouble(data[8]);
                                 hrv = (int) Double.parseDouble(data[9]);
                                 amp = (int) Double.parseDouble(data[8]);
                                 lat = (int) Double.parseDouble(data[9]);

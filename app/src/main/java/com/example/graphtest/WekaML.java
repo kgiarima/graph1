@@ -72,6 +72,7 @@ public class WekaML extends AppCompatActivity {
 
         Thread thr = new Thread(new Runnable() {
             public void run() {
+
                 System.out.println("*** 75 Inside run ");
                 // **** create new instance: this should be set with all values from arduino
                 DenseInstance newDataInstance = new DenseInstance(dataUnpredicted.numAttributes()) {
@@ -105,11 +106,11 @@ public class WekaML extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
 
+            }
         });
-        thr.run();
-        thr.interrupt();
+//        thr.run();
+         thr.interrupt();
 
         System.out.println("*** 110 res is : "+res);
         return res;
