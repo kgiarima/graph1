@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class ResultsActivity extends AppCompatActivity {
@@ -73,6 +74,23 @@ public class ResultsActivity extends AppCompatActivity {
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
         setGraph("anxietyAll");
+        showStatistics();
+    }
+
+    private void showStatistics() {
+        Toast.makeText(ResultsActivity.this, "Your average anxiety level was "+anxiety.get(0), Toast.LENGTH_SHORT).show();
+        try {
+            TimeUnit.SECONDS.sleep(5);
+        }catch(InterruptedException e){}
+        
+        if(anxiety.get(1)>0 && anxiety.get(0)>0){
+            Double difference = anxiety.get(1)/anxiety.get(0);
+            if(difference>1) {
+                Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled was improved " + difference + " times", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled declined " + difference + " times", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void setAvgValues() {
@@ -172,7 +190,7 @@ public class ResultsActivity extends AppCompatActivity {
                 .anchor(Anchor.LEFT_CENTER)
                 .offsetX(5d)
                 .offsetY(5d);
-//
+
 //        Line series3 = cartesian.line(series3Mapping);
 //        series3.name("Tequila");
 //        series3.hovered().markers().enabled(true);
@@ -223,6 +241,4 @@ public class ResultsActivity extends AppCompatActivity {
         anyChartView.clear();
         setGraph("hr");
     }
-
 }
-
