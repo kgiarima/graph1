@@ -107,15 +107,14 @@
             android:onClick="goBack"
             />
 
-        <Button
-            android:id="@+id/startBtn"
+        <TextView
+            android:id="@+id/resultTextView"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="3"
-            android:layout_margin="15dp"
-            android:textSize="20sp"
-            android:text="Start"
-            android:visibility="invisible"
+            android:layout_margin="10dp"
+            android:textSize="15sp"
+            android:text=""
             />
 
         <Button

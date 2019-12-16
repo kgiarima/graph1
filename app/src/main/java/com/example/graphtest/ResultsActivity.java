@@ -34,7 +34,7 @@ public class ResultsActivity extends AppCompatActivity {
     private static List<Integer> anxietyAll2, gsrAll2, sktAll2, hrAll2, hrvAll2;
     private static Button backBtn;
     private static AnyChartView anyChartView;
-    private static TextView gsrText, sktText, hrText, hrvText;
+    private static TextView gsrText, sktText, hrText, hrvText, resultText;
     private static Cartesian cartesian;
     private static MainActivity mainData;
     private static String gsrTxt, sktTxt, hrTxt, hrvTxt;
@@ -49,6 +49,7 @@ public class ResultsActivity extends AppCompatActivity {
         sktText = (TextView) findViewById(R.id.sktTextView);
         hrText = (TextView) findViewById(R.id.hrTextView);
         hrvText = (TextView) findViewById(R.id.hrvTextView);
+        resultText = (TextView) findViewById(R.id.resultTextView);
 
         mainData = new MainActivity();
 
@@ -78,11 +79,9 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     private void showStatistics() {
-        Toast.makeText(ResultsActivity.this, "Your average anxiety level was "+anxiety.get(0), Toast.LENGTH_SHORT).show();
-        try {
-            TimeUnit.SECONDS.sleep(5);
-        }catch(InterruptedException e){}
-        
+
+        resultText.setText("Your average anxiety level was : "+anxiety.get(0).intValue());
+
         if(anxiety.get(1)>0 && anxiety.get(0)>0){
             Double difference = anxiety.get(1)/anxiety.get(0);
             if(difference>1) {
@@ -155,16 +154,22 @@ public class ResultsActivity extends AppCompatActivity {
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-        for (int i = 0; graph.size()>graph2.size()?i < graph.size():i<graph2.size(); i++) {
-            seriesData.add(new CustomDataEntry("" + i, graph.get(i)!=null?graph.get(i):0,graph2.get(i)!=null?graph2.get(i):0));
-        }
-
+//        if(graph.size()>0) {
+//            for (int i = 0; graph.size() > graph2.size() ? i < graph.size() : i < graph2.size(); i++) {
+//                seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
+//            }
+//        }else{
+//            System.out.println("*** 164 size was 0");
+//        }
+            for (int i = 0; i<graph.size(); i++) {
+                seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0));
+            }
 
         Set set = Set.instantiate();
         set.instantiate();
         set.data(seriesData);
         Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
-        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
+//        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
@@ -179,17 +184,17 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetX(5d)
                 .offsetY(5d);
 
-        Line series2 = cartesian.line(series2Mapping);
-        series2.name(title+"w binaural");
-        series2.hovered().markers().enabled(true);
-        series2.hovered().markers()
-                .type(MarkerType.CIRCLE)
-                .size(4d);
-        series2.tooltip()
-                .position("right")
-                .anchor(Anchor.LEFT_CENTER)
-                .offsetX(5d)
-                .offsetY(5d);
+//        Line series2 = cartesian.line(series2Mapping);
+//        series2.name(title+"w binaural");
+//        series2.hovered().markers().enabled(true);
+//        series2.hovered().markers()
+//                .type(MarkerType.CIRCLE)
+//                .size(4d);
+//        series2.tooltip()
+//                .position("right")
+//                .anchor(Anchor.LEFT_CENTER)
+//                .offsetX(5d)
+//                .offsetY(5d);
 
 //        Line series3 = cartesian.line(series3Mapping);
 //        series3.name("Tequila");
@@ -215,12 +220,19 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     public class CustomDataEntry extends ValueDataEntry {
-        CustomDataEntry(String x, Number value, Number value2) {
+        CustomDataEntry(String x, Number value) {
 
             super(x, value);
-            setValue("value2", value2);
         }
     }
+
+//    public class CustomDataEntry extends ValueDataEntry {
+//        CustomDataEntry(String x, Number value, Number value2) {
+//
+//            super(x, value);
+//            setValue("value2", value2);
+//        }
+//    }
 
     public void showGsr(View view) {
         anyChartView.clear();

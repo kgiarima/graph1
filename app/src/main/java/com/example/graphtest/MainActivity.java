@@ -123,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
             testInstance = new DenseInstance(5);
             testInstance.setDataset(ds);
         } catch (Exception e) {
-            System.out.println("*******Line 85*********");
             System.out.println(e);
         }
     }
@@ -250,7 +249,7 @@ public class MainActivity extends AppCompatActivity {
         }catch(Exception e){
             System.out.println(e);
         }
-        return null;
+        return 0.0;
     }
 
     public void btCheck(View view) {
@@ -352,7 +351,6 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                             }
                             final String tempLine = line;
-                            // System.out.println("****** 202 data: " + tempLine);
                             String[] data = tempLine.split("\\s*,\\s*");
                             int statusCheck = checkHealthStatus(data[0]);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
 
@@ -362,7 +360,6 @@ public class MainActivity extends AppCompatActivity {
                                 hr = (int) Double.parseDouble(data[8]);
                                 hrv = (int) Double.parseDouble(data[9]);
                                 anxietyLvl = predict().intValue();
-
                                 updateValues();
                                 showValues(gsr, skt, hr, hrv, anxietyLvl);
                             } else {
@@ -380,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateValues() {
 
-        if(gsr>0&&skt>0&&hr>0&&hrv>0) {
+        if(gsr>0&&skt>0&&hr>0&&hrv>0&&anxietyLvl>0) {
             if (binauralOn) {
                 gsrTotal2.add(gsr);
                 sktTotal2.add(skt);
@@ -432,14 +429,14 @@ public class MainActivity extends AppCompatActivity {
         System.out.println(gsr);
          if (status.equals("M")) {
              return 0;
-         } else if (status.equals("G")||gsr==0) {
+         } else if (status.equals("G")||gsr<1) {
             gsrDot.setBackgroundResource(R.drawable.dot_red);
             return 1;
-        } else if (status.equals("H")||hr==0||hrv==0) {
+        } else if (status.equals("H")||hr<1||hrv<1) {
             hrDot.setBackgroundResource(R.drawable.dot_red);
             hrvDot.setBackgroundResource(R.drawable.dot_red);
             return 2;
-        } else if (status.equals("T")||skt==0) {
+        } else if (status.equals("T")||skt<1) {
             sktDot.setBackgroundResource(R.drawable.dot_red);
             return 3;
         } else {
