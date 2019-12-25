@@ -99,7 +99,7 @@
 
         <Button
             android:id="@+id/backBtn"
-            android:background="@drawable/arrow"
+            android:background="@drawable/arrow2"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -119,10 +119,10 @@
 
         <Button
             android:id="@+id/infoBtn"
-            android:layout_width="0dp"
+            android:layout_width="20dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_margin="10dp"
+            android:layout_margin="5dp"
             android:background="@drawable/info"
             android:onClick="showResults"
             />

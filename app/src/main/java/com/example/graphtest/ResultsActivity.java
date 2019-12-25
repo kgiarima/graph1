@@ -76,22 +76,6 @@ public class ResultsActivity extends AppCompatActivity {
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
         setGraph("anxietyAll");
-        //showStatistics();
-        //setResultsText();
-    }
-
-    private void showStatistics() {
-
-        resultTextView.setText("Your average anxiety level was : " + anxiety.get(0).intValue());
-
-        if (anxiety.get(1) > 0 && anxiety.get(0) > 0) {
-            Double difference = anxiety.get(1) / anxiety.get(0);
-            if (difference > 1) {
-                Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled was improved " + difference + " times", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled declined " + difference + " times", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     private void setAvgValues() {
@@ -148,7 +132,7 @@ public class ResultsActivity extends AppCompatActivity {
 
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
 
-        cartesian.title(title + " of the session");
+        cartesian.title(title + " during the session");
 
         cartesian.yAxis(0).title(title);
         cartesian.xAxis(0).title("Time (sec)");
@@ -156,26 +140,33 @@ public class ResultsActivity extends AppCompatActivity {
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-//        if(graph.size()>0) {
-//            for (int i = 0; graph.size() > graph2.size() ? i < graph.size() : i < graph2.size(); i++) {
-//                seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
-//            }
-//        }else{
-//            System.out.println("*** 164 size was 0");
-//        }
-        for (int i = 0; i < graph.size(); i++) {
-            seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0));
+        if(graph.size()>=graph2.size()) {
+            for (int i = 0; i < graph.size(); i++) {
+                if (i < graph2.size()) {
+                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
+                } else {
+                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, null));
+                }
+            }
+        }else{
+            for (int i = 0; i < graph2.size(); i++) {
+                if (i < graph.size()) {
+                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
+                } else {
+                    seriesData.add(new CustomDataEntry("" + i, null, graph2.get(i) != null ? graph2.get(i) : 0));
+                }
+            }
         }
 
         Set set = Set.instantiate();
         set.instantiate();
         set.data(seriesData);
         Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
-//        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
+        Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
-        series1.name(title + "w/o binaural");
+        series1.name(title + " w/o binaural");
         series1.hovered().markers().enabled(true);
         series1.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -186,17 +177,17 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetX(5d)
                 .offsetY(5d);
 
-//        Line series2 = cartesian.line(series2Mapping);
-//        series2.name(title+"w binaural");
-//        series2.hovered().markers().enabled(true);
-//        series2.hovered().markers()
-//                .type(MarkerType.CIRCLE)
-//                .size(4d);
-//        series2.tooltip()
-//                .position("right")
-//                .anchor(Anchor.LEFT_CENTER)
-//                .offsetX(5d)
-//                .offsetY(5d);
+        Line series2 = cartesian.line(series2Mapping);
+        series2.name(title+" w binaural");
+        series2.hovered().markers().enabled(true);
+        series2.hovered().markers()
+                .type(MarkerType.CIRCLE)
+                .size(4d);
+        series2.tooltip()
+                .position("right")
+                .anchor(Anchor.LEFT_CENTER)
+                .offsetX(5d)
+                .offsetY(5d);
 
 //        Line series3 = cartesian.line(series3Mapping);
 //        series3.name("Tequila");
@@ -221,20 +212,20 @@ public class ResultsActivity extends AppCompatActivity {
         finish();
     }
 
-    public class CustomDataEntry extends ValueDataEntry {
-        CustomDataEntry(String x, Number value) {
-
-            super(x, value);
-        }
-    }
-
 //    public class CustomDataEntry extends ValueDataEntry {
-//        CustomDataEntry(String x, Number value, Number value2) {
+//        CustomDataEntry(String x, Number value) {
 //
 //            super(x, value);
-//            setValue("value2", value2);
 //        }
 //    }
+
+    public class CustomDataEntry extends ValueDataEntry {
+        CustomDataEntry(String x, Number value, Number value2) {
+
+            super(x, value);
+            setValue("value2", value2);
+        }
+    }
 
     public void showGsr(View view) {
         anyChartView.clear();
@@ -258,18 +249,19 @@ public class ResultsActivity extends AppCompatActivity {
 
     public void setResultsText() {
         resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
-        if (anxiety.get(1) != 0.0) {
-            results = "Your average anxiety level during the session was: " + anxiety.get(0).intValue() + "/n";
-            results.concat("Your average anxiety level during alpha binaural beats was: " + anxiety.get(1).intValue() + "/n");
+        if (anxiety.get(1) > 0) {
+            results = "Your average anxiety level during the session was: " + anxiety.get(0).intValue() + "\n\n";
+            results+=("Your average anxiety level with alpha binaural beats was: " + anxiety.get(1).intValue() + "\n\n");
             Double difference = anxiety.get(1) / anxiety.get(0);
             if (difference > 1) {
-                results.concat("Overall alpha binaural beats improved your anxiety levels " + difference + " times");
+                results+=("Overall alpha binaural beats improved your anxiety levels " + difference + " times\n");
             } else {
-                results.concat("Overall alpha binaural beats increased your anxiety levels " + difference + " times");
+                results+=("Overall alpha binaural beats increased your anxiety levels " + difference + " times\n");
             }
         } else {
-            results = "Your average anxiety level during the session was: " + anxiety.get(0) + "/n";
+            results = "Your average anxiety level during the session was: " + anxiety.get(0) + "\n";
         }
+        resultsText.setText(results);
     }
 
     public void showResults(View view) {
