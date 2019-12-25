@@ -1,5 +1,6 @@
 package com.example.graphtest;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -24,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class ResultsActivity extends AppCompatActivity {
@@ -34,10 +34,11 @@ public class ResultsActivity extends AppCompatActivity {
     private static List<Integer> anxietyAll2, gsrAll2, sktAll2, hrAll2, hrvAll2;
     private static Button backBtn;
     private static AnyChartView anyChartView;
-    private static TextView gsrText, sktText, hrText, hrvText, resultText;
+    private static TextView gsrText, sktText, hrText, hrvText, resultTextView, resultsText;
     private static Cartesian cartesian;
     private static MainActivity mainData;
-    private static String gsrTxt, sktTxt, hrTxt, hrvTxt;
+    private static String gsrTxt, sktTxt, hrTxt, hrvTxt, results;
+    private static Dialog resultsDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +50,7 @@ public class ResultsActivity extends AppCompatActivity {
         sktText = (TextView) findViewById(R.id.sktTextView);
         hrText = (TextView) findViewById(R.id.hrTextView);
         hrvText = (TextView) findViewById(R.id.hrvTextView);
-        resultText = (TextView) findViewById(R.id.resultTextView);
+        resultTextView = (TextView) findViewById(R.id.resultTextView);
 
         mainData = new MainActivity();
 
@@ -59,34 +60,35 @@ public class ResultsActivity extends AppCompatActivity {
         hrv = new HashMap<>(mainData.getAvg("hrv")); //Avg("hrv");
         anxiety = new HashMap<>(mainData.getAvg("anxiety")); //Avg("anxiety");
 
-        anxietyAll = new ArrayList<>(mainData.getTotal("anxietyAll",0));
-        gsrAll = new ArrayList<>(mainData.getTotal("gsr",0));
-        sktAll = new ArrayList<>(mainData.getTotal("skt",0));
-        hrAll = new ArrayList<>(mainData.getTotal("hr",0));
-        hrvAll = new ArrayList<>(mainData.getTotal("hrv",0));
+        anxietyAll = new ArrayList<>(mainData.getTotal("anxietyAll", 0));
+        gsrAll = new ArrayList<>(mainData.getTotal("gsr", 0));
+        sktAll = new ArrayList<>(mainData.getTotal("skt", 0));
+        hrAll = new ArrayList<>(mainData.getTotal("hr", 0));
+        hrvAll = new ArrayList<>(mainData.getTotal("hrv", 0));
 
-        anxietyAll2 = new ArrayList<>(mainData.getTotal("anxietyAll",1));
-        gsrAll2 = new ArrayList<>(mainData.getTotal("gsr",1));
-        sktAll2 = new ArrayList<>(mainData.getTotal("skt",1));
-        hrAll2 = new ArrayList<>(mainData.getTotal("hr",1));
-        hrvAll2 = new ArrayList<>(mainData.getTotal("hrv",1));
+        anxietyAll2 = new ArrayList<>(mainData.getTotal("anxietyAll", 1));
+        gsrAll2 = new ArrayList<>(mainData.getTotal("gsr", 1));
+        sktAll2 = new ArrayList<>(mainData.getTotal("skt", 1));
+        hrAll2 = new ArrayList<>(mainData.getTotal("hr", 1));
+        hrvAll2 = new ArrayList<>(mainData.getTotal("hrv", 1));
 
         setAvgValues();
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
         setGraph("anxietyAll");
-        showStatistics();
+        //showStatistics();
+        //setResultsText();
     }
 
     private void showStatistics() {
 
-        resultText.setText("Your average anxiety level was : "+anxiety.get(0).intValue());
+        resultTextView.setText("Your average anxiety level was : " + anxiety.get(0).intValue());
 
-        if(anxiety.get(1)>0 && anxiety.get(0)>0){
-            Double difference = anxiety.get(1)/anxiety.get(0);
-            if(difference>1) {
+        if (anxiety.get(1) > 0 && anxiety.get(0) > 0) {
+            Double difference = anxiety.get(1) / anxiety.get(0);
+            if (difference > 1) {
                 Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled was improved " + difference + " times", Toast.LENGTH_SHORT).show();
-            }else{
+            } else {
                 Toast.makeText(ResultsActivity.this, "Your average anxiety with binaural beats enabled declined " + difference + " times", Toast.LENGTH_SHORT).show();
             }
         }
@@ -95,7 +97,7 @@ public class ResultsActivity extends AppCompatActivity {
     private void setAvgValues() {
         gsrTxt = ("Avg GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
         sktTxt = ("Avg SKT \nNo Binaural : " + skt.get(0) + "\nAlpha Binaural : " + skt.get(1));
-        hrTxt =  ("Avg HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
+        hrTxt = ("Avg HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
         hrvTxt = ("Avg HRV \nNo Binaural : " + hrv.get(0) + "\nAlpha Binaural : " + hrv.get(1));
         gsrText.setText(gsrTxt);
         sktText.setText(sktTxt);
@@ -161,9 +163,9 @@ public class ResultsActivity extends AppCompatActivity {
 //        }else{
 //            System.out.println("*** 164 size was 0");
 //        }
-            for (int i = 0; i<graph.size(); i++) {
-                seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0));
-            }
+        for (int i = 0; i < graph.size(); i++) {
+            seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0));
+        }
 
         Set set = Set.instantiate();
         set.instantiate();
@@ -173,7 +175,7 @@ public class ResultsActivity extends AppCompatActivity {
 //        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
-        series1.name(title+"w/o binaural");
+        series1.name(title + "w/o binaural");
         series1.hovered().markers().enabled(true);
         series1.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -252,5 +254,35 @@ public class ResultsActivity extends AppCompatActivity {
     public void showHr(View view) {
         anyChartView.clear();
         setGraph("hr");
+    }
+
+    public void setResultsText() {
+        resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
+        if (anxiety.get(1) != 0.0) {
+            results = "Your average anxiety level during the session was: " + anxiety.get(0).intValue() + "/n";
+            results.concat("Your average anxiety level during alpha binaural beats was: " + anxiety.get(1).intValue() + "/n");
+            Double difference = anxiety.get(1) / anxiety.get(0);
+            if (difference > 1) {
+                results.concat("Overall alpha binaural beats improved your anxiety levels " + difference + " times");
+            } else {
+                results.concat("Overall alpha binaural beats increased your anxiety levels " + difference + " times");
+            }
+        } else {
+            results = "Your average anxiety level during the session was: " + anxiety.get(0) + "/n";
+        }
+    }
+
+    public void showResults(View view) {
+        resultsDialog = new Dialog(this);
+        resultsDialog.setContentView(R.layout.results_message);
+        setResultsText();
+        Button close = (Button) resultsDialog.findViewById(R.id.closeBtn);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                resultsDialog.dismiss();
+            }
+        });
+        resultsDialog.show();
     }
 }

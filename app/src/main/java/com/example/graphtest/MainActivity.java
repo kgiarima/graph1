@@ -352,6 +352,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             final String tempLine = line;
                             String[] data = tempLine.split("\\s*,\\s*");
+                            System.out.println("***355 "+tempLine);
                             int statusCheck = checkHealthStatus(data[0]);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
 
                             if (statusCheck == 0) {
@@ -426,23 +427,24 @@ public class MainActivity extends AppCompatActivity {
 
     public int checkHealthStatus(String status) {
         setDots(true);
-        System.out.println(gsr);
-         if (status.equals("M")) {
-             return 0;
-         } else if (status.equals("G")||gsr<1) {
-            gsrDot.setBackgroundResource(R.drawable.dot_red);
-            return 1;
-        } else if (status.equals("H")||hr<1||hrv<1) {
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
-            return 2;
-        } else if (status.equals("T")||skt<1) {
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            return 3;
-        } else {
-            setDots(false);
-            return 4;
-        }
+
+            if (status.equals("M")) {
+                return 0;
+            } else if (status.equals("G") || gsr < 1) {
+                gsrDot.setBackgroundResource(R.drawable.dot_red);
+                return 1;
+            } else if (status.equals("H") || hr < 1 || hrv < 1) {
+                hrDot.setBackgroundResource(R.drawable.dot_red);
+                hrvDot.setBackgroundResource(R.drawable.dot_red);
+                return 2;
+            } else if (status.equals("T") || skt < 1) {
+                sktDot.setBackgroundResource(R.drawable.dot_red);
+                return 3;
+            } else {
+                setDots(false);
+                return 4;
+            }
+
     }
 
     public void addBinaural(View view) {

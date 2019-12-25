@@ -118,12 +118,13 @@
             />
 
         <Button
-            android:id="@+id/btBtn"
+            android:id="@+id/infoBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_margin="5dp"
-            android:visibility="invisible"
+            android:layout_margin="10dp"
+            android:background="@drawable/info"
+            android:onClick="showResults"
             />
 
     </LinearLayout>
