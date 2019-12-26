@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.axis(0).scale()
                 .minimum(0)
-                .maximum(100);
+                .maximum(40); //or 100
 
         circularGauge.axis(0).scale()
                 .ticks("{interval: 10}")
@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.range(0,
                 "{\n" +
                         "    from: 0,\n" +
-                        "    to: 40,\n" +
+                        "    to: 25,\n" + //40
                         "    position: 'inside',\n" +
                         "    fill: 'green 0.5',\n" +
                         "    stroke: '1 #000',\n" +
@@ -207,8 +207,8 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.range(1,
                 "{\n" +
-                        "    from: 40,\n" +
-                        "    to: 75,\n" +
+                        "    from: 25,\n" +
+                        "    to: 30,\n" + //75
                         "    position: 'inside',\n" +
                         "    fill: 'yellow 0.5',\n" +
                         "    stroke: '1 #000',\n" +
@@ -220,8 +220,8 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.range(2,
                 "{\n" +
-                        "    from: 75,\n" +
-                        "    to: 100,\n" +
+                        "    from: 30,\n" +
+                        "    to: 40,\n" + //100
                         "    position: 'inside',\n" +
                         "    fill: 'red 0.5',\n" +
                         "    stroke: '1 #000',\n" +

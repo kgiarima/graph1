@@ -21,6 +21,7 @@ import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.graphics.vector.Stroke;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -250,16 +251,22 @@ public class ResultsActivity extends AppCompatActivity {
     public void setResultsText() {
         resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
         if (anxiety.get(1) > 0) {
-            results = "Your average anxiety level during the session was: " + anxiety.get(0).intValue() + "\n\n";
-            results+=("Your average anxiety level with alpha binaural beats was: " + anxiety.get(1).intValue() + "\n\n");
-            Double difference = anxiety.get(1) / anxiety.get(0);
-            if (difference > 1) {
-                results+=("Overall alpha binaural beats improved your anxiety levels " + difference + " times\n");
+            results = "Your average anxiety level during the session was: " + new DecimalFormat("0.0").format(anxiety.get(0))+ "\n\n";
+            results+=("Your average anxiety level with alpha binaural beats was: " + new DecimalFormat("0.0").format(anxiety.get(1)) + "\n\n");
+            Double difference;
+            if(anxiety.get(0)>=anxiety.get(1)) {
+                difference = anxiety.get(1) * 100 / anxiety.get(0);
+            }else{
+                difference = anxiety.get(0) * 100 / anxiety.get(1);
+            }
+            String dif = new DecimalFormat("0.0").format(difference);
+            if (difference > 100) {
+                results+=("Overall alpha binaural beats decreased your anxiety levels by " + dif + "% \n");
             } else {
-                results+=("Overall alpha binaural beats increased your anxiety levels " + difference + " times\n");
+                results+=("Overall alpha binaural beats increased your anxiety levels by " + dif + "% \n");
             }
         } else {
-            results = "Your average anxiety level during the session was: " + anxiety.get(0) + "\n";
+            results = "Your average anxiety level during the session was: " + new DecimalFormat("0.0").format(anxiety.get(0)) + "\n";
         }
         resultsText.setText(results);
     }
