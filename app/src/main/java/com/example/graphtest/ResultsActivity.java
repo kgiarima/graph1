@@ -1,6 +1,7 @@
 package com.example.graphtest;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -211,6 +212,7 @@ public class ResultsActivity extends AppCompatActivity {
 
     public void goBack(View view) {
         finish();
+        startActivity(new Intent(ResultsActivity.this, MainActivity.class));
     }
 
 //    public class CustomDataEntry extends ValueDataEntry {

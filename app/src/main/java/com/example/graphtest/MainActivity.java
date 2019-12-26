@@ -1,6 +1,5 @@
 package com.example.graphtest;
 
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -307,7 +306,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void start(View view) {
-
         if (!isConnected) { // if device is not connected show message
             Toast.makeText(MainActivity.this, "Device is not connected", Toast.LENGTH_SHORT).show();
         } else if (!isRunning && isConnected) { // if connected and not running already start listening for data
@@ -329,6 +327,7 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(e);
             }
 
+            finish();
             startActivity(new Intent(MainActivity.this, ResultsActivity.class));
         }
     }
