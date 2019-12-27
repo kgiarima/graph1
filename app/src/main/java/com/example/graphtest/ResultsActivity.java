@@ -34,13 +34,14 @@ public class ResultsActivity extends AppCompatActivity {
     private static Map<Integer, Double> gsr, skt, hr, hrv, anxiety;
     private static List<Integer> anxietyAll, gsrAll, sktAll, hrAll, hrvAll;
     private static List<Integer> anxietyAll2, gsrAll2, sktAll2, hrAll2, hrvAll2;
-    private static Button backBtn;
+    private static Button backBtn, saveDataBtn;
     private static AnyChartView anyChartView;
-    private static TextView gsrText, sktText, hrText, hrvText, resultTextView, resultsText;
+    private static TextView gsrText, sktText, hrText, hrvText, resultsText;
     private static Cartesian cartesian;
     private static MainActivity mainData;
     private static String gsrTxt, sktTxt, hrTxt, hrvTxt, results;
     private static Dialog resultsDialog;
+    private static DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +53,7 @@ public class ResultsActivity extends AppCompatActivity {
         sktText = (TextView) findViewById(R.id.sktTextView);
         hrText = (TextView) findViewById(R.id.hrTextView);
         hrvText = (TextView) findViewById(R.id.hrvTextView);
-        resultTextView = (TextView) findViewById(R.id.resultTextView);
+        saveDataBtn = (Button) findViewById(R.id.saveDataBtn);
 
         mainData = new MainActivity();
 
@@ -213,6 +214,10 @@ public class ResultsActivity extends AppCompatActivity {
     public void goBack(View view) {
         finish();
         startActivity(new Intent(ResultsActivity.this, MainActivity.class));
+    }
+
+    public void saveData(View view) {
+
     }
 
 //    public class CustomDataEntry extends ValueDataEntry {

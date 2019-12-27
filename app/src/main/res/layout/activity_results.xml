@@ -107,19 +107,19 @@
             android:onClick="goBack"
             />
 
-        <TextView
-            android:id="@+id/resultTextView"
+        <Button
+            android:id="@+id/saveDataBtn"
+            android:background="@drawable/save_data"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="3"
+            android:layout_weight="2"
             android:layout_margin="10dp"
-            android:textSize="15sp"
-            android:text=""
+            android:onClick="saveData"
             />
 
         <Button
             android:id="@+id/infoBtn"
-            android:layout_width="20dp"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="5dp"
