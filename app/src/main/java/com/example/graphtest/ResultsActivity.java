@@ -23,6 +23,8 @@ import com.anychart.enums.TooltipPositionMode;
 import com.anychart.graphics.vector.Stroke;
 
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -217,7 +219,15 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     public void saveData(View view) {
-
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        LocalDateTime now = LocalDateTime.now();
+        String[] data = {dtf.format(now),"User1",gsr.get(0).toString(),gsr.get(1).toString(),skt.get(0).toString(),skt.get(1).toString(),hr.get(0).toString(),hr.get(1).toString(),hrv.get(0).toString(),hrv.get(1).toString(),anxiety.get(0).toString(),anxiety.get(1).toString()};
+        boolean insertData = dbHelper.addData(data);
+        if(insertData){
+            Toast.makeText(this,"Data successfully stored",Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this,"Data could not be stored",Toast.LENGTH_SHORT).show();
+        }
     }
 
 //    public class CustomDataEntry extends ValueDataEntry {

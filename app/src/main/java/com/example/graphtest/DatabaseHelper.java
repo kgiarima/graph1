@@ -1,6 +1,8 @@
 package com.example.graphtest;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -38,9 +40,33 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean addData(String item){
+    public boolean addData(String item[]){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COL1,item[0]);
+        contentValues.put(COL2,item[1]);
+        contentValues.put(COL3,item[2]);
+        contentValues.put(COL4,item[3]);
+        contentValues.put(COL5,item[4]);
+        contentValues.put(COL6,item[5]);
+        contentValues.put(COL7,item[6]);
+        contentValues.put(COL8,item[7]);
+        contentValues.put(COL9,item[8]);
+        contentValues.put(COL10,item[9]);
+        contentValues.put(COL11,item[10]);
+        contentValues.put(COL12,item[11]);
 
+        long result = db.insert(TABLE_NAME,null,contentValues);
+        if(result==-1){
+            return false;
+        }else {
+            return true;
+        }
+    }
 
-        return true;
+    public Cursor getData(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor data = db.rawQuery("SELECT * FROM "+TABLE_NAME,null);
+        return data;
     }
 }
