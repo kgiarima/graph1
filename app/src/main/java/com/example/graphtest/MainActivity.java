@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private static TextView gsrText;
     private MediaPlayer mp;
 
+    private Handler mainHandler = new Handler();
+
     // weka
     private static RandomForest rf;
     private static DataSource src;
@@ -95,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         deviceFound = false;
         isConnected = false;
 
-        gsrActive = new double[100];
+        gsrActive = new double[50];
         emoStateTotal = new ArrayList<Integer>();
         gsrTotal = new ArrayList<Double>();
         emoStateTotal2 = new ArrayList<Integer>();
@@ -353,29 +356,37 @@ public class MainActivity extends AppCompatActivity {
                             final String tempLine = line;
                             String[] data = tempLine.split("\\s*,\\s*");
                             System.out.println("***355 "+tempLine);
-                            gsr = Double.parseDouble(data[1]);
-                            statusCheck = 1;
-                            try {
-                                statusCheck = checkHealthStatus(data[0]);  // 0 = ok , 1 = error
-                            }catch(Exception e){ }
-                            if (statusCheck == 0) {
 
-                                gsrActive[count%100] = gsr;
-                                count++;
+                            mainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    gsr = Double.parseDouble(data[1]);
+                                    statusCheck = 1;
+                                    try {
+                                        statusCheck = checkHealthStatus(data[0]);  // 0 = ok , 1 = error
+                                    }catch(Exception e){ }
+                                    if (statusCheck == 0) {
 
-                                if(count>100 && count%50==0) {
-                                    setModelValues();
-                                    emoState = predict();
-                                    updateValues();
-                                    showValues(meanGsr, emoState);
+                                        gsrActive[count%50] = gsr;
+                                        count++;
+
+                                        if(count>50 && count%25==0) {
+                                            setModelValues();
+                                            emoState = predict();
+                                            updateValues();
+                                            showValues(meanGsr, emoState);
+                                        }
+                                        if(count%10==0) {
+                                            showValues(gsr, emoState);
+                                        }
+
+                                    } else {
+                                        showValues(0.0,  -1);
+                                    }
                                 }
-                                if(count%10==0) {
-                                    showValues(gsr, emoState);
-                                }
+                            });
 
-                            } else {
-                                showValues(0.0,  -1);
-                            }
+
                         }
                     } catch (IOException ex) {
                         stopWorker = true;
