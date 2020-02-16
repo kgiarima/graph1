@@ -23,14 +23,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL11="avg_anxiety";
     private static final String COL12="avg_anxiety_binaural";
 
-
     public DatabaseHelper(Context context){
         super(context, TABLE_NAME, null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createTable = "CREATE TABLE "+TABLE_NAME+" (ID INTEGER PRIMARY KEY AUTOINCREMENT, "+COL1+" DATE, "+COL2+" TEXT, "+COL3+ "NUMBER, "+COL4+ "NUMBER, "+COL5+ "NUMBER, "+COL6+ "NUMBER, "+COL7+ "NUMBER, "+COL8+ "NUMBER, "+COL9+ "NUMBER, "+COL10+ "NUMBER, "+COL11+ "NUMBER, "+COL12+ "NUMBER)";
+        String createTable = "CREATE TABLE "+TABLE_NAME+" ("+COL0+" INTEGER PRIMARY KEY AUTOINCREMENT, "+COL1+" DATE, "+COL2+" TEXT, "+COL3+ "NUMBER, "+COL4+ "NUMBER, "+COL5+ "NUMBER, "+COL6+ "NUMBER, "+COL7+ "NUMBER, "+COL8+ "NUMBER, "+COL9+ "NUMBER, "+COL10+ "NUMBER, "+COL11+ "NUMBER, "+COL12+ "NUMBER)";
         db.execSQL(createTable);
     }
 

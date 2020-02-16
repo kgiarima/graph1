@@ -17,6 +17,12 @@ import com.anychart.chart.common.dataentry.SingleValueDataSet;
 import com.anychart.charts.CircularGauge;
 import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.analysis.function.Min;
+import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
+import org.apache.commons.math3.stat.descriptive.moment.Skewness;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import weka.classifiers.trees.RandomForest;
@@ -34,17 +39,22 @@ import weka.core.Instances;
 import weka.core.Instance;
 import weka.core.converters.ConverterUtils.DataSource;
 
+import static org.apache.commons.math3.stat.StatUtils.max;
+import static org.apache.commons.math3.stat.StatUtils.mean;
+import static org.apache.commons.math3.stat.StatUtils.min;
+
 public class MainActivity extends AppCompatActivity {
 
-    private static Random r;
-    private static int anxietyLvl, gsr, skt, hr, hrv;
-    private static List<Integer> anxietyTotal, gsrTotal, hrTotal, hrvTotal, sktTotal;
-    private static List<Integer> anxietyTotal2, gsrTotal2, hrTotal2, hrvTotal2, sktTotal2;
-    private static Button startBtn, btBtn, binBtn, gsrDot, sktDot, hrDot, hrvDot;
+    private static int emoState, count, statusCheck;
+    private static double meanGsr,maxGsr,minGsr,rangeGsr,kurtGsr,skewGsr,gsr;
+    private static double gsrActive[];
+    private static List<Integer> emoStateTotal, emoStateTotal2;
+    private static List<Double> gsrTotal, gsrTotal2;
+    private static Button startBtn, btBtn, binBtn, gsrDot;
     private static boolean isRunning, deviceFound, isConnected, binauralOn;
     private static AnyChartView anyChartView;
     private static CircularGauge circularGauge;
-    private static TextView gsrText, sktText, hrText, hrvText;
+    private static TextView gsrText;
     private MediaPlayer mp;
 
     // weka
@@ -52,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private static DataSource src;
     private static Instances ds;
     private static Instance testInstance;
-    private static Double anxPred;
+    private static int emoStatePredict;
 
     //arduino
     BluetoothAdapter bluetoothAdapter;
@@ -75,9 +85,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void initialize() {
 
+        count = 0;
         isRunning = false;
         binauralOn = false;
-        r = new Random();
 
         //bluetooth init
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -85,41 +95,29 @@ public class MainActivity extends AppCompatActivity {
         deviceFound = false;
         isConnected = false;
 
-        anxietyTotal = new ArrayList<Integer>();
-        gsrTotal = new ArrayList<Integer>();
-        hrTotal = new ArrayList<Integer>();
-        hrvTotal = new ArrayList<Integer>();
-        sktTotal = new ArrayList<Integer>();
-        anxietyTotal2 = new ArrayList<Integer>();
-        gsrTotal2 = new ArrayList<Integer>();
-        hrTotal2 = new ArrayList<Integer>();
-        hrvTotal2 = new ArrayList<Integer>();
-        sktTotal2 = new ArrayList<Integer>();
+        gsrActive = new double[100];
+        emoStateTotal = new ArrayList<Integer>();
+        gsrTotal = new ArrayList<Double>();
+        emoStateTotal2 = new ArrayList<Integer>();
+        gsrTotal2 = new ArrayList<Double>();
 
         startBtn = (Button) findViewById(R.id.startBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
         binBtn = (Button) findViewById(R.id.binBtn);
 
         gsrDot = (Button) findViewById(R.id.gsrDot);
-        sktDot = (Button) findViewById(R.id.sktDot);
-        hrDot = (Button) findViewById(R.id.hrDot);
-        hrvDot = (Button) findViewById(R.id.hrvDot);
-
         gsrText = (TextView) findViewById(R.id.gsrTextView);
-        sktText = (TextView) findViewById(R.id.sktTextView);
-        hrText = (TextView) findViewById(R.id.hrTextView);
-        hrvText = (TextView) findViewById(R.id.hrvTextView);
 
         anyChartView = findViewById(R.id.any_chart_view);
     }
 
     private void initializeWeka() {
         try {
-            rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("anxietyModel.model"));
-            src = new DataSource(getAssets().open("anxiety.arff"));
+            rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion.model"));
+            src = new DataSource(getAssets().open("gsrData.arff"));
             ds = src.getDataSet();
             ds.setClassIndex(ds.numAttributes() - 1);
-            testInstance = new DenseInstance(5);
+            testInstance = new DenseInstance(7); // mean, max, min, range, kurt, skew, F_Label
             testInstance.setDataset(ds);
         } catch (Exception e) {
             System.out.println(e);
@@ -137,9 +135,9 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.startAngle(0)
                 .sweepAngle(360);
 
-        anxietyLvl = 0;
+        emoState = -1;
 
-        circularGauge.data(new SingleValueDataSet(new Double[]{(double) anxietyLvl}));
+        circularGauge.data(new SingleValueDataSet(new Double[]{(double) emoState}));
 
         circularGauge.axis(0)
                 .startAngle(-150)
@@ -151,12 +149,12 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.axis(0).labels().position("outside");
 
         circularGauge.axis(0).scale()
-                .minimum(0)
-                .maximum(40); //or 100
+                .minimum(-1)
+                .maximum(8); //or 100
 
         circularGauge.axis(0).scale()
-                .ticks("{interval: 10}")
-                .minorTicks("{interval: 10}");
+                .ticks("{interval: 1}")
+                .minorTicks("{interval: 1}");
 
         circularGauge.needle(0)
                 .stroke(null)
@@ -171,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
                 .stroke(null);
 
         circularGauge.label(0)
-                .text("<span style=\"font-size: 25\">Anxiety Level</span>")
+                .text("<span style=\"font-size: 25\">Emotional State</span>")
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
@@ -181,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                 .padding(15, 20, 0, 0);
 
         circularGauge.label(1)
-                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>")
+                .text("<span style=\"font-size: 20\">" + emoState + "</span>")
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
@@ -194,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         circularGauge.range(0,
                 "{\n" +
                         "    from: 0,\n" +
-                        "    to: 25,\n" + //40
+                        "    to: 2,\n" + //40
                         "    position: 'inside',\n" +
                         "    fill: 'green 0.5',\n" +
                         "    stroke: '1 #000',\n" +
@@ -206,8 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.range(1,
                 "{\n" +
-                        "    from: 25,\n" +
-                        "    to: 30,\n" + //75
+                        "    from: 3,\n" +
+                        "    to: 5,\n" + //75
                         "    position: 'inside',\n" +
                         "    fill: 'yellow 0.5',\n" +
                         "    stroke: '1 #000',\n" +
@@ -219,8 +217,8 @@ public class MainActivity extends AppCompatActivity {
 
         circularGauge.range(2,
                 "{\n" +
-                        "    from: 30,\n" +
-                        "    to: 40,\n" + //100
+                        "    from: 6,\n" +
+                        "    to: 8,\n" + //100
                         "    position: 'inside',\n" +
                         "    fill: 'red 0.5',\n" +
                         "    stroke: '1 #000',\n" +
@@ -233,22 +231,24 @@ public class MainActivity extends AppCompatActivity {
         anyChartView.setChart(circularGauge);
     }
 
-    private Double predict() {
+    private int predict() {
         try {
-            testInstance.setValue(ds.attribute("gsr"), gsr);
-            testInstance.setValue(ds.attribute("tempe"), skt);
-            testInstance.setValue(ds.attribute("hr"), hr);
-            testInstance.setValue(ds.attribute("hrv"), hrv);
-            testInstance.setValue(ds.attribute("anxiety"), 20.0);
-            System.out.println("*****The instance: " + testInstance);
-            anxPred = rf.classifyInstance(testInstance);
-            System.out.println(anxPred);
+            testInstance.setValue(ds.attribute("mean"), meanGsr);
+            testInstance.setValue(ds.attribute("max"), maxGsr);
+            testInstance.setValue(ds.attribute("min"), minGsr);
+            testInstance.setValue(ds.attribute("range"), rangeGsr);
+            testInstance.setValue(ds.attribute("kurt"), kurtGsr);
+            testInstance.setValue(ds.attribute("skew"), skewGsr);
 
-            return anxPred;
+            System.out.println("*****The instance: " + testInstance);
+            emoStatePredict = (int) rf.classifyInstance(testInstance);
+            System.out.println(emoStatePredict);
+
+            return emoStatePredict;
         }catch(Exception e){
             System.out.println(e);
         }
-        return 0.0;
+        return -1;
     }
 
     public void btCheck(View view) {
@@ -344,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                         BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+                        in.readLine();
                         String line;
                         while ((line = in.readLine()) != null) {
                             if (stopWorker) {
@@ -352,18 +353,28 @@ public class MainActivity extends AppCompatActivity {
                             final String tempLine = line;
                             String[] data = tempLine.split("\\s*,\\s*");
                             System.out.println("***355 "+tempLine);
-                            int statusCheck = checkHealthStatus(data[0]);  //0 = all good , 1 = gsr error , 2 = hr/hrv error , 3 = skt error, 4 = random error (connection etc)
-
+                            gsr = Double.parseDouble(data[1]);
+                            statusCheck = 1;
+                            try {
+                                statusCheck = checkHealthStatus(data[0]);  // 0 = ok , 1 = error
+                            }catch(Exception e){ }
                             if (statusCheck == 0) {
-                                gsr = (int) Double.parseDouble(data[2]);
-                                skt = (int) Double.parseDouble(data[7]);
-                                hr = (int) Double.parseDouble(data[8]);
-                                hrv = (int) Double.parseDouble(data[9]);
-                                anxietyLvl = predict().intValue();
-                                updateValues();
-                                showValues(gsr, skt, hr, hrv, anxietyLvl);
+
+                                gsrActive[count%100] = gsr;
+                                count++;
+
+                                if(count>100 && count%50==0) {
+                                    setModelValues();
+                                    emoState = predict();
+                                    updateValues();
+                                    showValues(meanGsr, emoState);
+                                }
+                                if(count%10==0) {
+                                    showValues(gsr, emoState);
+                                }
+
                             } else {
-                                showValues(0, 0, 0, 0, 0);
+                                showValues(0.0,  -1);
                             }
                         }
                     } catch (IOException ex) {
@@ -375,73 +386,63 @@ public class MainActivity extends AppCompatActivity {
         workerThread.start();
     }
 
-    public void updateValues() {
+    public void setModelValues(){
 
-        if(gsr>0&&skt>0&&hr>0&&hrv>0&&anxietyLvl>0) {
-            if (binauralOn) {
-                gsrTotal2.add(gsr);
-                sktTotal2.add(skt);
-                hrTotal2.add(hr);
-                hrvTotal2.add(hrv);
-                anxietyTotal2.add(anxietyLvl);
-            } else {
-                gsrTotal.add(gsr);
-                sktTotal.add(skt);
-                hrTotal.add(hr);
-                hrvTotal.add(hrv);
-                anxietyTotal.add(anxietyLvl);
-            }
+        meanGsr = mean(gsrActive);
+        minGsr = min(gsrActive);
+        maxGsr = max(gsrActive);
+        rangeGsr = maxGsr - minGsr;
+        skewGsr = new Skewness().evaluate(gsrActive);
+        kurtGsr = new Kurtosis().evaluate(gsrActive);
+
+//        for(int i=0;i<5;i++){
+//            gsrActive = ArrayUtils.remove(gsrActive,0);
+//        }
+    }
+
+    // choice = 0 means that both gsr and emo_state should be added ti the total Lists. If choice = 1 only gsr should be added to the total List
+    public void updateValues( ) {
+
+        if (binauralOn) {
+            gsrTotal2.add(meanGsr);
+            emoStateTotal2.add(emoState);
+        } else {
+            gsrTotal.add(meanGsr);
+            emoStateTotal.add(emoState);
         }
     }
 
-    public void showValues(int gsr, int skt, int hr, int hrv, int anxietyLvl) {
+    public void showValues(double gsr,int emoState) {
         gsrText.setText("GSR : " + gsr);
-        sktText.setText("SKT : " + skt);
-        hrText.setText("HR : " + hr);
-        hrvText.setText("HRV : " + hrv);
-
+        // +"\n Count : "+count
+        System.out.println("** count : "+count);
         circularGauge.autoRedraw();//***check
         circularGauge.label(1)
-                .text("<span style=\"font-size: 20\">" + anxietyLvl + "</span>")
+                .text("<span style=\"font-size: 20\">" + emoState + "</span>")
                 .useHtml(true)
                 .hAlign(HAlign.CENTER);
 
-        circularGauge.data(new SingleValueDataSet(new Double[]{(double) anxietyLvl}));
+        circularGauge.data(new SingleValueDataSet(new Double[]{(double) emoState}));
         circularGauge.autoRedraw();//***check
     }
 
     public void setDots(boolean set) {
         if (set) {
             gsrDot.setBackgroundResource(R.drawable.dot_green);
-            sktDot.setBackgroundResource(R.drawable.dot_green);
-            hrDot.setBackgroundResource(R.drawable.dot_green);
-            hrvDot.setBackgroundResource(R.drawable.dot_green);
         } else {
             gsrDot.setBackgroundResource(R.drawable.dot_red);
-            sktDot.setBackgroundResource(R.drawable.dot_red);
-            hrDot.setBackgroundResource(R.drawable.dot_red);
-            hrvDot.setBackgroundResource(R.drawable.dot_red);
         }
     }
 
     public int checkHealthStatus(String status) {
         setDots(true);
 
-            if (status.equals("M")) {
+            if (status.equals("M") && gsr>0 && gsr<20) {
+                setDots(true);
                 return 0;
-            } else if (status.equals("G") || gsr < 1) {
-                gsrDot.setBackgroundResource(R.drawable.dot_red);
-                return 1;
-            } else if (status.equals("H") || hr < 1 || hrv < 1) {
-                hrDot.setBackgroundResource(R.drawable.dot_red);
-                hrvDot.setBackgroundResource(R.drawable.dot_red);
-                return 2;
-            } else if (status.equals("T") || skt < 1) {
-                sktDot.setBackgroundResource(R.drawable.dot_red);
-                return 3;
             } else {
                 setDots(false);
-                return 4;
+                return 1;
             }
 
     }
@@ -487,55 +488,70 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public List<Integer> getTotal(String s, int b) {
+    public List<Integer> getTotal(int b) {
         if (b == 0) {
-            if (s.equals("anxiety")) return anxietyTotal;
-            else if (s.equals("gsr")) return gsrTotal;
-            else if (s.equals("skt")) return sktTotal;
-            else if (s.equals("hr")) return hrvTotal;
-            else if (s.equals("hrv")) return hrvTotal;
-            return anxietyTotal;
+             return emoStateTotal;
         } else {
-            if (s.equals("anxiety")) return anxietyTotal2;
-            else if (s.equals("gsr")) return gsrTotal2;
-            else if (s.equals("skt")) return sktTotal2;
-            else if (s.equals("hr")) return hrvTotal2;
-            else if (s.equals("hrv")) return hrvTotal2;
-            return anxietyTotal2;
+            return emoStateTotal2;
         }
     }
 
-    public Map<Integer, Double> getAvg(String s) {
+    public List<Double> getTotalGsr(int b) {
+        if (b == 0) {
+            return gsrTotal;
+        } else {
+            return gsrTotal2;
+        }
+    }
+
+    public Map<Integer, Double> getAvg() {
         List<Integer> set1, set2;
         Map<Integer, Double> map = new HashMap<Integer, Double>();
         int sum1 = 0;
         int sum2 = 0;
 
-        if (s.equals("anxiety")) {
-            set1 = anxietyTotal;
-            set2 = anxietyTotal2;
-        } else if (s.equals("gsr")) {
-            set1 = gsrTotal;
-            set2 = gsrTotal2;
-        } else if (s.equals("skt")) {
-            set1 = sktTotal;
-            set2 = sktTotal2;
-        } else if (s.equals("hr")) {
-            set1 = hrTotal;
-            set2 = hrTotal2;
-        } else if (s.equals("hrv")) {
-            set1 = hrvTotal;
-            set2 = hrvTotal2;
-        } else {
-            set1 = anxietyTotal;
-            set2 = anxietyTotal2;
-        }
+        set1 = emoStateTotal;
+        set2 = emoStateTotal2;
 
         for (int x : set1) {
             sum1 += x;
         }
 
         for (int x : set2) {
+            sum2 += x;
+        }
+
+        if (set1.size() > 0) {
+            double mo = sum1 / set1.size();
+            map.put(0, mo);
+        } else {
+            map.put(0, -1.0);
+        }
+
+        if (set2.size() > 0) {
+            double mo = sum2 / set2.size();
+            map.put(1, mo);
+        } else {
+            map.put(1, -1.0);
+        }
+
+        return map;
+    }
+
+    public Map<Integer, Double> getAvgGsr() {
+        List<Double> set1, set2;
+        Map<Integer, Double> map = new HashMap<Integer, Double>();
+        int sum1 = 0;
+        int sum2 = 0;
+
+        set1 = gsrTotal;
+        set2 = gsrTotal2;
+
+        for (double x : set1) {
+            sum1 += x;
+        }
+
+        for (double x : set2) {
             sum2 += x;
         }
 

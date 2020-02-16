@@ -30,10 +30,10 @@
                 <Button
                 android:id="@+id/gsrDot"
                 android:background="@drawable/dot_red"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:layout_margin="5dp"
+                android:layout_margin="20dp"
                 />
 
                 <TextView
@@ -45,100 +45,33 @@
                 android:text="GSR"
                 android:gravity="center"
                 />
-
             </RelativeLayout>
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1">
+                android:layout_weight="1.5">
+
                 <Button
-                    android:id="@+id/sktDot"
-                    android:background="@drawable/dot_red"
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
+                    android:id="@+id/emoState"
+                    android:background="@drawable/emo_state"
+                    android:layout_width="300dp"
+                    android:layout_height="200dp"
                     android:layout_weight="1"
-                    android:layout_margin="5dp"
+                    android:layout_margin="10dp"
                     />
 
-                <TextView
-                    android:id="@+id/sktTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:textSize="20sp"
-                    android:text="SKT"
-                    android:gravity="center"
-                    />
-            </RelativeLayout>
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            >
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <Button
-                    android:id="@+id/hrDot"
-                    android:background="@drawable/dot_red"
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
-                    android:layout_weight="1"
-                    android:layout_margin="5dp"
-                    />
-
-                <TextView
-                    android:id="@+id/hrTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:textSize="20sp"
-                    android:text="HR"
-                    android:gravity="center"
-                    />
-            </RelativeLayout>
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <Button
-                    android:id="@+id/hrvDot"
-                    android:background="@drawable/dot_red"
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
-                    android:layout_weight="1"
-                    android:layout_margin="5dp"
-                    />
-
-                <TextView
-                    android:id="@+id/hrvTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:textSize="20sp"
-                    android:text="HRV"
-                    android:gravity="center"
-                    />
             </RelativeLayout>
 
         </LinearLayout>
 
     </LinearLayout>
 
-
     <com.anychart.AnyChartView
         android:id="@+id/any_chart_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5"
+        android:layout_weight="6.4"
         >
 
     </com.anychart.AnyChartView>
@@ -146,7 +79,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="1.2"
         android:orientation="horizontal"
         >
 

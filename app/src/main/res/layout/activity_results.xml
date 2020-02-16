@@ -11,7 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"
+        android:layout_weight="1"
         android:orientation="vertical"
         >
 
@@ -32,51 +32,6 @@
                 android:gravity="center"
                 android:layout_margin="4dp"
                 android:onClick="showGsr"
-                />
-
-            <TextView
-                android:id="@+id/sktTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="15sp"
-                android:text="SKT"
-                android:gravity="center"
-                android:layout_margin="4dp"
-                android:onClick="showSkt"
-                />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            >
-
-            <TextView
-                android:id="@+id/hrTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="15sp"
-                android:text="HR"
-                android:gravity="center"
-                android:layout_margin="4dp"
-                android:onClick="showHr"
-                />
-
-            <TextView
-                android:id="@+id/hrvTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="15sp"
-                android:text="HRV"
-                android:gravity="center"
-                android:layout_margin="4dp"
-                android:onClick="showHrv"
                 />
 
         </LinearLayout>

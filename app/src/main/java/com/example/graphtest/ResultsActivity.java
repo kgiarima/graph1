@@ -33,17 +33,18 @@ import java.util.Map;
 
 public class ResultsActivity extends AppCompatActivity {
 
-    private static Map<Integer, Double> gsr, skt, hr, hrv, anxiety;
-    private static List<Integer> anxietyAll, gsrAll, sktAll, hrAll, hrvAll;
-    private static List<Integer> anxietyAll2, gsrAll2, sktAll2, hrAll2, hrvAll2;
+    private static Map<Integer, Double> gsr, emoState;
+    private static List<Integer> emoStateAll, emoStateAll2; // 2 is for binaural data
+    private static List<Double> gsrAll, gsrAll2;
     private static Button backBtn, saveDataBtn;
     private static AnyChartView anyChartView;
-    private static TextView gsrText, sktText, hrText, hrvText, resultsText;
+    private static TextView gsrText, resultsText;
     private static Cartesian cartesian;
     private static MainActivity mainData;
-    private static String gsrTxt, sktTxt, hrTxt, hrvTxt, results;
+    private static String gsrTxt, results;
     private static Dialog resultsDialog;
     private static DatabaseHelper dbHelper;
+    private static LoginActivity la;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,113 +53,92 @@ public class ResultsActivity extends AppCompatActivity {
 
         backBtn = (Button) findViewById(R.id.backBtn);
         gsrText = (TextView) findViewById(R.id.gsrTextView);
-        sktText = (TextView) findViewById(R.id.sktTextView);
-        hrText = (TextView) findViewById(R.id.hrTextView);
-        hrvText = (TextView) findViewById(R.id.hrvTextView);
         saveDataBtn = (Button) findViewById(R.id.saveDataBtn);
 
         mainData = new MainActivity();
+        dbHelper = new DatabaseHelper(this);
 
-        gsr = new HashMap<>(mainData.getAvg("gsr")); //Avg("gsr");
-        skt = new HashMap<>(mainData.getAvg("skt")); //Avg("skt");
-        hr = new HashMap<>(mainData.getAvg("hr")); //Avg("hr");
-        hrv = new HashMap<>(mainData.getAvg("hrv")); //Avg("hrv");
-        anxiety = new HashMap<>(mainData.getAvg("anxiety")); //Avg("anxiety");
+        gsr = new HashMap<>(mainData.getAvgGsr()); //Avg("gsr");
+        emoState = new HashMap<>(mainData.getAvg()); //Avg("emo_state");
 
-        anxietyAll = new ArrayList<>(mainData.getTotal("anxietyAll", 0));
-        gsrAll = new ArrayList<>(mainData.getTotal("gsr", 0));
-        sktAll = new ArrayList<>(mainData.getTotal("skt", 0));
-        hrAll = new ArrayList<>(mainData.getTotal("hr", 0));
-        hrvAll = new ArrayList<>(mainData.getTotal("hrv", 0));
+        emoStateAll = new ArrayList<>(mainData.getTotal( 0));
+        gsrAll = new ArrayList<>(mainData.getTotalGsr(0));
 
-        anxietyAll2 = new ArrayList<>(mainData.getTotal("anxietyAll", 1));
-        gsrAll2 = new ArrayList<>(mainData.getTotal("gsr", 1));
-        sktAll2 = new ArrayList<>(mainData.getTotal("skt", 1));
-        hrAll2 = new ArrayList<>(mainData.getTotal("hr", 1));
-        hrvAll2 = new ArrayList<>(mainData.getTotal("hrv", 1));
+        emoStateAll2 = new ArrayList<>(mainData.getTotal(1));
+        gsrAll2 = new ArrayList<>(mainData.getTotalGsr( 1));
 
         setAvgValues();
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
-        setGraph("anxietyAll");
+        setGraph(0);
     }
 
     private void setAvgValues() {
         gsrTxt = ("Avg GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
-        sktTxt = ("Avg SKT \nNo Binaural : " + skt.get(0) + "\nAlpha Binaural : " + skt.get(1));
-        hrTxt = ("Avg HR \nNo Binaural : " + hr.get(0) + "\nAlpha Binaural : " + hr.get(1));
-        hrvTxt = ("Avg HRV \nNo Binaural : " + hrv.get(0) + "\nAlpha Binaural : " + hrv.get(1));
         gsrText.setText(gsrTxt);
-        sktText.setText(sktTxt);
-        hrText.setText(hrTxt);
-        hrvText.setText(hrvTxt);
     }
 
-    public void setGraph(String choice) {
+    public void setGraph(int choice) {
 
-        List<Integer> graph, graph2;
+        List<Double> graph, graph2;
+        List<Integer> graph3, graph4;
         String title;
 
-        if (choice.equals("anxietyAll")) {
-            graph = new ArrayList<>(anxietyAll);
-            graph2 = new ArrayList<>(anxietyAll2);
-            title = "Anxiety Level";
-        } else if (choice.equals("gsr")) {
-            graph = new ArrayList<>(gsrAll);
-            graph2 = new ArrayList<>(gsrAll2);
-            title = "GSR Level";
-        } else if (choice.equals("skt")) {
-            graph = new ArrayList<>(sktAll);
-            graph2 = new ArrayList<>(sktAll2);
-            title = "SKT Level";
-        } else if (choice.equals("hr")) {
-            graph = new ArrayList<>(hrAll);
-            graph2 = new ArrayList<>(hrAll2);
-            title = "HR Level";
-        } else if (choice.equals("hrv")) {
-            graph = new ArrayList<>(hrvAll);
-            graph2 = new ArrayList<>(hrvAll2);
-            title = "HRV Level";
-        } else {
-            graph = new ArrayList<>(anxietyAll);
-            graph2 = new ArrayList<>(anxietyAll2);
-            title = "Anxiety Level";
-        }
+        graph = new ArrayList<>(gsrAll);
+        graph2 = new ArrayList<>(gsrAll2);
+        graph3 = new ArrayList<>(emoStateAll);
+        graph4 = new ArrayList<>(emoStateAll2);
+        title = choice==0? "Emotional State": "GSR Level";
 
         cartesian.animation(true);
-
         cartesian.padding(5d, 5d, 5d, 5d);
-
         cartesian.crosshair().enabled(true);
         cartesian.crosshair()
                 .yLabel(true)
-                // TODO ystroke
                 .yStroke((Stroke) null, null, null, (String) null, (String) null);
 
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
-
         cartesian.title(title + " during the session");
-
         cartesian.yAxis(0).title(title);
         cartesian.xAxis(0).title("Time (sec)");
         cartesian.xAxis(0).labels().padding(5d, 5d, 5d, 5d);
 
         List<DataEntry> seriesData = new ArrayList<>();
 
-        if(graph.size()>=graph2.size()) {
-            for (int i = 0; i < graph.size(); i++) {
-                if (i < graph2.size()) {
-                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
-                } else {
-                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, null));
+        if(choice==0) {
+            if (graph3.size() >= graph4.size()) {
+                for (int i = 0; i < graph3.size(); i++) {
+                    if (i < graph4.size()) {
+                        seriesData.add(new CustomDataEntry("" + i, graph3.get(i) != null ? graph3.get(i) : 0, graph4.get(i) != null ? graph4.get(i) : 0));
+                    } else {
+                        seriesData.add(new CustomDataEntry("" + i, graph3.get(i) != null ? graph3.get(i) : 0, null));
+                    }
+                }
+            } else {
+                for (int i = 0; i < graph4.size(); i++) {
+                    if (i < graph3.size()) {
+                        seriesData.add(new CustomDataEntry("" + i, graph3.get(i) != null ? graph3.get(i) : 0, graph4.get(i) != null ? graph4.get(i) : 0));
+                    } else {
+                        seriesData.add(new CustomDataEntry("" + i, null, graph4.get(i) != null ? graph4.get(i) : 0));
+                    }
                 }
             }
         }else{
-            for (int i = 0; i < graph2.size(); i++) {
-                if (i < graph.size()) {
-                    seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
-                } else {
-                    seriesData.add(new CustomDataEntry("" + i, null, graph2.get(i) != null ? graph2.get(i) : 0));
+            if (graph.size() >= graph2.size()) {
+                for (int i = 0; i < graph.size(); i++) {
+                    if (i < graph2.size()) {
+                        seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
+                    } else {
+                        seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, null));
+                    }
+                }
+            } else {
+                for (int i = 0; i < graph2.size(); i++) {
+                    if (i < graph.size()) {
+                        seriesData.add(new CustomDataEntry("" + i, graph.get(i) != null ? graph.get(i) : 0, graph2.get(i) != null ? graph2.get(i) : 0));
+                    } else {
+                        seriesData.add(new CustomDataEntry("" + i, null, graph2.get(i) != null ? graph2.get(i) : 0));
+                    }
                 }
             }
         }
@@ -183,7 +163,7 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetY(5d);
 
         Line series2 = cartesian.line(series2Mapping);
-        series2.name(title+" w binaural");
+        series2.name(title + " w binaural");
         series2.hovered().markers().enabled(true);
         series2.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -221,12 +201,12 @@ public class ResultsActivity extends AppCompatActivity {
     public void saveData(View view) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
-        String[] data = {dtf.format(now),"User1",gsr.get(0).toString(),gsr.get(1).toString(),skt.get(0).toString(),skt.get(1).toString(),hr.get(0).toString(),hr.get(1).toString(),hrv.get(0).toString(),hrv.get(1).toString(),anxiety.get(0).toString(),anxiety.get(1).toString()};
+        String[] data = {dtf.format(now), getUser(), gsr.get(0).toString(), gsr.get(1).toString(), emoState.get(0).toString(), emoState.get(1).toString()};
         boolean insertData = dbHelper.addData(data);
-        if(insertData){
-            Toast.makeText(this,"Data successfully stored",Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(this,"Data could not be stored",Toast.LENGTH_SHORT).show();
+        if (insertData) {
+            Toast.makeText(this, "Data successfully stored", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Data could not be stored", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -237,55 +217,63 @@ public class ResultsActivity extends AppCompatActivity {
 //        }
 //    }
 
-    public class CustomDataEntry extends ValueDataEntry {
-        CustomDataEntry(String x, Number value, Number value2) {
-
-            super(x, value);
-            setValue("value2", value2);
-        }
+    public String getUser() {
+        la = new LoginActivity();
+        return la.getUser();
     }
 
     public void showGsr(View view) {
         anyChartView.clear();
-        setGraph("gsr");
-    }
-
-    public void showHrv(View view) {
-        anyChartView.clear();
-        setGraph("hrv");
-    }
-
-    public void showSkt(View view) {
-        anyChartView.clear();
-        setGraph("skt");
-    }
-
-    public void showHr(View view) {
-        anyChartView.clear();
-        setGraph("hr");
+        setGraph(1);
     }
 
     public void setResultsText() {
-        resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
-        if (anxiety.get(1) > 0) {
-            results = "Your average anxiety level during the session was: " + new DecimalFormat("0.0").format(anxiety.get(0))+ "\n\n";
-            results+=("Your average anxiety level with alpha binaural beats was: " + new DecimalFormat("0.0").format(anxiety.get(1)) + "\n\n");
-            Double difference;
-            if(anxiety.get(0)>=anxiety.get(1)) {
-                difference = anxiety.get(1) * 100 / anxiety.get(0);
-            }else{
-                difference = anxiety.get(0) * 100 / anxiety.get(1);
-            }
-            String dif = new DecimalFormat("0.0").format(difference);
-            if (difference > 100) {
-                results+=("Overall alpha binaural beats decreased your anxiety levels by " + dif + "% \n");
-            } else {
-                results+=("Overall alpha binaural beats increased your anxiety levels by " + dif + "% \n");
-            }
-        } else {
-            results = "Your average anxiety level during the session was: " + new DecimalFormat("0.0").format(anxiety.get(0)) + "\n";
+        resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText); // todo create results message (overall your emotional state was 'low excitement' while on binaural beats...
+        String emoStateMessage = getResultsMessage((int) Math.round(emoState.get(0)));
+        String emoStateMessage2 = getResultsMessage((int) Math.round(emoState.get(1)));
+        String message = "Your average emotional state during the measurement was : ";
+        message+=emoStateMessage;
+        if(emoState.get(1)>=0){
+            message+="\n\nYour average emotional state with binaural beats on, was : "+emoStateMessage2;
         }
-        resultsText.setText(results);
+        resultsText.setText(message);
+    }
+
+    public String getResultsMessage(double value){
+        String message;
+        switch ((int) Math.round(value)) {
+            case 0:
+                message = "Low Baseline";
+                break;
+            case 1:
+                message = "Medium Baseline";
+                break;
+            case 2:
+                message = "High Baseline";
+                break;
+            case 3:
+                message = "Low Amusement";
+                break;
+            case 4:
+                message = "Medium Amusement";
+                break;
+            case 5:
+                message = "High Amusement";
+                break;
+            case 6:
+                message = "Low Stress";
+                break;
+            case 7:
+                message = "Medium Stress";
+                break;
+            case 8:
+                message = "High Stress";
+                break;
+            default:
+                message = "Not found";
+                break;
+        }
+        return message;
     }
 
     public void showResults(View view) {
@@ -300,5 +288,13 @@ public class ResultsActivity extends AppCompatActivity {
             }
         });
         resultsDialog.show();
+    }
+
+    public class CustomDataEntry extends ValueDataEntry {
+        CustomDataEntry(String x, Number value, Number value2) {
+
+            super(x, value);
+            setValue("value2", value2);
+        }
     }
 }

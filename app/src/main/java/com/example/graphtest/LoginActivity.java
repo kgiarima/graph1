@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static String mUser;
     private static Button login;
     private static EditText user,pass;
     private HashMap<String,String> users;
@@ -70,7 +71,10 @@ public class LoginActivity extends AppCompatActivity {
 
     public void login(View view) {
 
+        startActivity(new Intent(LoginActivity.this, MainActivity.class)); // todo change when users will use the app
+
         userTry = user.getText().toString();
+        mUser = user.getText().toString();
         passTry = pass.getText().toString();
         access = match(userTry, passTry);
         if (userTry.equals("") || passTry.equals("")) {
@@ -82,5 +86,9 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    public String getUser(){
+        return mUser;
     }
 }
