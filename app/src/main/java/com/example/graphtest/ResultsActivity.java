@@ -1,6 +1,7 @@
 package com.example.graphtest;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import com.anychart.chart.common.dataentry.DataEntry;
 import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.anychart.charts.Cartesian;
 import com.anychart.core.cartesian.series.Line;
+import com.anychart.core.utils.OrdinalZoom;
 import com.anychart.data.Mapping;
 import com.anychart.data.Set;
 import com.anychart.enums.Anchor;
@@ -22,6 +24,14 @@ import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.graphics.vector.Stroke;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +55,7 @@ public class ResultsActivity extends AppCompatActivity {
     private static Dialog resultsDialog;
     private static DatabaseHelper dbHelper;
     private static LoginActivity la;
+    private static final String FNAME = "example.txt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +101,13 @@ public class ResultsActivity extends AppCompatActivity {
         graph4 = new ArrayList<>(emoStateAll2);
         title = choice==0? "Emotional State": "GSR Level";
 
+        cartesian.xScroller(true);
+
+        OrdinalZoom xZoom = cartesian.xZoom();
+        xZoom.setToPointsCount(6, false, null);
+        xZoom.getStartRatio();
+        xZoom.getEndRatio();
+
         cartesian.animation(true);
         cartesian.padding(5d, 5d, 5d, 5d);
         cartesian.crosshair().enabled(true);
@@ -100,7 +118,7 @@ public class ResultsActivity extends AppCompatActivity {
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
         cartesian.title(title + " during the session");
         cartesian.yAxis(0).title(title);
-        cartesian.xAxis(0).title("Time (sec)");
+        cartesian.xAxis(0).title("Input");
         cartesian.xAxis(0).labels().padding(5d, 5d, 5d, 5d);
 
         List<DataEntry> seriesData = new ArrayList<>();
@@ -199,13 +217,44 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     public void saveData(View view) {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-        LocalDateTime now = LocalDateTime.now();
-        String[] data = {dtf.format(now), getUser(), gsr.get(0).toString(), gsr.get(1).toString(), emoState.get(0).toString(), emoState.get(1).toString()};
-        boolean insertData = dbHelper.addData(data);
-        if (insertData) {
-            Toast.makeText(this, "Data successfully stored", Toast.LENGTH_SHORT).show();
-        } else {
+//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+//        LocalDateTime now = LocalDateTime.now();
+//        String[] data = {dtf.format(now), getUser(), gsr.get(0).toString(), gsr.get(1).toString(), emoState.get(0).toString(), emoState.get(1).toString()};
+//        boolean insertData = dbHelper.addData(data);
+//        if (insertData) {
+//            Toast.makeText(this, "Data successfully stored", Toast.LENGTH_SHORT).show();
+//        } else {
+//            Toast.makeText(this, "Data could not be stored", Toast.LENGTH_SHORT).show();
+//        }
+        la = new LoginActivity();
+
+        try{
+            FileInputStream fis = openFileInput(FNAME);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String existingData;
+            while((existingData = br.readLine())!=null){
+                sb.append(existingData).append("\n");
+            }
+            if(fis!=null){
+                fis.close();
+            }
+
+            String textToAdd = "\nUser: "+la.getUserName()+" "+la.getUserSurname()+"\n";
+            List<String> data = mainData.getData();
+            for(int i=0;i<data.size();i++){
+                textToAdd = textToAdd+data.get(i)+"\n";
+            }
+
+
+            FileOutputStream fos = openFileOutput(FNAME, MODE_PRIVATE);
+            fos.write((sb.toString().concat(textToAdd)).getBytes());
+            if(fos!=null){
+                fos.close();
+            }
+            Toast.makeText(this, "Data successfully stored in "+getFilesDir(), Toast.LENGTH_SHORT).show();
+        }catch(Exception e){
             Toast.makeText(this, "Data could not be stored", Toast.LENGTH_SHORT).show();
         }
     }
@@ -217,18 +266,13 @@ public class ResultsActivity extends AppCompatActivity {
 //        }
 //    }
 
-    public String getUser() {
-        la = new LoginActivity();
-        return la.getUser();
-    }
-
     public void showGsr(View view) {
         anyChartView.clear();
         setGraph(1);
     }
 
     public void setResultsText() {
-        resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText); // todo create results message (overall your emotional state was 'low excitement' while on binaural beats...
+        resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
         String emoStateMessage = getResultsMessage((int) Math.round(emoState.get(0)));
         String emoStateMessage2 = getResultsMessage((int) Math.round(emoState.get(1)));
         String message = "Your average emotional state during the measurement was : ";

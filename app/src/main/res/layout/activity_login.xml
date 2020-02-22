@@ -11,22 +11,22 @@
     >
 
     <EditText
-        android:id="@+id/userTxt"
+        android:id="@+id/nameTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="username"
+        android:hint="name"
         android:inputType="textPersonName"
         android:layout_gravity="center_horizontal"
         android:gravity="center"/>
 
     <EditText
-        android:id="@+id/passTxt"
+        android:id="@+id/snameTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="password"
-        android:inputType="textPassword"
+        android:hint="surname"
+        android:inputType="textPersonName"
         android:layout_gravity="center_horizontal"
         android:gravity="center"/>
 

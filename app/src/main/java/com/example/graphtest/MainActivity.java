@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static double gsrActive[];
     private static List<Integer> emoStateTotal, emoStateTotal2;
     private static List<Double> gsrTotal, gsrTotal2;
+    private static List<String> data;
     private static Button startBtn, btBtn, binBtn, gsrDot;
     private static boolean isRunning, deviceFound, isConnected, binauralOn;
     private static AnyChartView anyChartView;
@@ -98,11 +99,12 @@ public class MainActivity extends AppCompatActivity {
         deviceFound = false;
         isConnected = false;
 
-        gsrActive = new double[50];
+        gsrActive = new double[100];
         emoStateTotal = new ArrayList<Integer>();
         gsrTotal = new ArrayList<Double>();
         emoStateTotal2 = new ArrayList<Integer>();
         gsrTotal2 = new ArrayList<Double>();
+        data = new ArrayList<String>();
 
         startBtn = (Button) findViewById(R.id.startBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
@@ -116,8 +118,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeWeka() {
         try {
-            rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion.model"));
-            src = new DataSource(getAssets().open("gsrData.arff"));
+            rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion2.model"));
+            src = new DataSource(getAssets().open("gsrData2.arff"));
             ds = src.getDataSet();
             ds.setClassIndex(ds.numAttributes() - 1);
             testInstance = new DenseInstance(7); // mean, max, min, range, kurt, skew, F_Label
@@ -367,12 +369,13 @@ public class MainActivity extends AppCompatActivity {
                                     }catch(Exception e){ }
                                     if (statusCheck == 0) {
 
-                                        gsrActive[count%50] = gsr;
+                                        gsrActive[count%100] = gsr;
                                         count++;
 
-                                        if(count>50 && count%25==0) {
+                                        if(count>100 && count%50==0) {
                                             setModelValues();
                                             emoState = predict();
+                                            updateData();
                                             updateValues();
                                             showValues(meanGsr, emoState);
                                         }
@@ -405,10 +408,15 @@ public class MainActivity extends AppCompatActivity {
         rangeGsr = maxGsr - minGsr;
         skewGsr = new Skewness().evaluate(gsrActive);
         kurtGsr = new Kurtosis().evaluate(gsrActive);
+    }
 
-//        for(int i=0;i<5;i++){
-//            gsrActive = ArrayUtils.remove(gsrActive,0);
-//        }
+    private void updateData(){
+        String s = String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState);
+        data.add(s);
+    }
+
+    public List<String> getData(){
+        return data;
     }
 
     // choice = 0 means that both gsr and emo_state should be added ti the total Lists. If choice = 1 only gsr should be added to the total List
