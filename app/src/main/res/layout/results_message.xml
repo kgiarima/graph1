@@ -13,9 +13,9 @@
         android:id="@+id/closeBtn"
         android:layout_width="47dp"
         android:layout_height="43dp"
-        android:background="@drawable/exit"
         android:layout_gravity="end"
-        android:gravity="center"/>
+        android:background="@drawable/exit2"
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/resultsText"

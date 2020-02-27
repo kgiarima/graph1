@@ -3,10 +3,12 @@ package com.example.graphtest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private static int emoState, count, statusCheck, model;
     private static double meanGsr,maxGsr,minGsr,rangeGsr,kurtGsr,skewGsr,gsr;
     private static double gsrActive[];
+    private static String binaural;
     private static List<Integer> emoStateTotal, emoStateTotal2;
     private static List<Double> gsrTotal, gsrTotal2;
     private static List<String> data;
@@ -95,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
         isRunning = false;
         binauralOn = false;
         model=0;
+        binaural = "No Binaural";
 
         //bluetooth init
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -122,8 +126,8 @@ public class MainActivity extends AppCompatActivity {
     private void initializeWeka(int model) {
         try {
             if(model==0) {
-                rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion2.model")); // enumerated F_label values
-                src = new DataSource(getAssets().open("gsrData2.arff"));
+                rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion3.model")); // enumerated F_label values
+                src = new DataSource(getAssets().open("traind.arff"));
             }else {
                 rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion.model"));
                 src = new DataSource(getAssets().open("gsrData.arff"));
@@ -246,12 +250,18 @@ public class MainActivity extends AppCompatActivity {
 
     private int predict() {
         try {
-            testInstance.setValue(ds.attribute("mean"), meanGsr);
-            testInstance.setValue(ds.attribute("max"), maxGsr);
-            testInstance.setValue(ds.attribute("min"), minGsr);
-            testInstance.setValue(ds.attribute("range"), rangeGsr);
-            testInstance.setValue(ds.attribute("kurt"), kurtGsr);
-            testInstance.setValue(ds.attribute("skew"), skewGsr);
+//            testInstance.setValue(ds.attribute("mean"), meanGsr);
+//            testInstance.setValue(ds.attribute("max"), maxGsr);
+//            testInstance.setValue(ds.attribute("min"), minGsr);
+//            testInstance.setValue(ds.attribute("range"), rangeGsr);
+//            testInstance.setValue(ds.attribute("kurt"), kurtGsr);
+//            testInstance.setValue(ds.attribute("skew"), skewGsr);
+            testInstance.setValue(ds.attribute("MEAN"), meanGsr);
+            testInstance.setValue(ds.attribute("MAXF"), maxGsr);
+            testInstance.setValue(ds.attribute("MINF"), minGsr);
+            testInstance.setValue(ds.attribute("RANGEF"), rangeGsr);
+            testInstance.setValue(ds.attribute("KURT"), kurtGsr);
+            testInstance.setValue(ds.attribute("SKEW"), skewGsr);
 
             System.out.println("*****The instance: " + testInstance);
             emoStatePredict = (int) rf.classifyInstance(testInstance);
@@ -476,31 +486,42 @@ public class MainActivity extends AppCompatActivity {
 
     public void addBinaural(View view) {
 
-        //player.release()
         if (!binauralOn) {
-            binauralOn = true;
-            binBtn.setActivated(true);
-            Toast.makeText(this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
-            if (mp == null) {
-                mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
-            }
-            mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            String[] binaurals = { "Alpha Binaural", "Beta Binaural", "Gamma Binaural", "Theta Binaural", "Delta Binaural"};
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Pick a binaural to play");
+            builder.setItems(binaurals, new DialogInterface.OnClickListener() {
                 @Override
-                public void onCompletion(MediaPlayer mediaPlayer) {
-                    binBtn.setEnabled(false);
-                    binauralOn = false;
-                    mp.release();
-                    mp = null;
+                public void onClick(DialogInterface dialog, int which) {
+
+                    binauralOn = true;
+                    binaural = binaurals[which];
+                    binBtn.setActivated(true);
+                    Toast.makeText(MainActivity.this, "Binaural Mode is On", Toast.LENGTH_SHORT).show();
+
+                    if (which== 0)  mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
+                    else if(which==1)  mp = MediaPlayer.create(MainActivity.this, R.raw.beta);
+                    else mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
+
+                    mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mediaPlayer) {
+                            binBtn.setEnabled(false);
+                            binauralOn = false;
+                            mp.release();
+                            mp = null;
+                        }
+                    });
+                    try {
+                        // TimeUnit.SECONDS.sleep(5);
+                        mp.start();
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Error playing the binaural", Toast.LENGTH_SHORT).show();
+                        binauralOn = false;
+                    }
                 }
             });
-            try {
-                // TimeUnit.SECONDS.sleep(5);
-                mp.start();
-
-            } catch (Exception e) {
-                Toast.makeText(this, "Error playing the binaural", Toast.LENGTH_SHORT).show();
-                binauralOn = false;
-            }
+            builder.show();
         } else {
             pauseBinaural();
         }
@@ -578,8 +599,8 @@ public class MainActivity extends AppCompatActivity {
     public Map<Integer, Double> getAvgGsr() {
         List<Double> set1, set2;
         Map<Integer, Double> map = new HashMap<Integer, Double>();
-        int sum1 = 0;
-        int sum2 = 0;
+        double sum1 = 0;
+        double sum2 = 0;
 
         set1 = gsrTotal;
         set2 = gsrTotal2;
@@ -607,5 +628,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return map;
+    }
+
+    public String getBinaural(){
+        return binaural;
     }
 }

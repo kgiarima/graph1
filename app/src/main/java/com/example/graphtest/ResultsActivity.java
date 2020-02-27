@@ -56,6 +56,7 @@ public class ResultsActivity extends AppCompatActivity {
     private static DatabaseHelper dbHelper;
     private static LoginActivity la;
     private static final String FNAME = "example.txt";
+    private static String binaural;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +79,8 @@ public class ResultsActivity extends AppCompatActivity {
         emoStateAll2 = new ArrayList<>(mainData.getTotal(1));
         gsrAll2 = new ArrayList<>(mainData.getTotalGsr( 1));
 
+        binaural = mainData.getBinaural();
+
         setAvgValues();
         anyChartView = findViewById(R.id.any_chart_view);
         cartesian = AnyChart.line();
@@ -85,7 +88,7 @@ public class ResultsActivity extends AppCompatActivity {
     }
 
     private void setAvgValues() {
-        gsrTxt = ("Avg GSR \nNo Binaural : " + gsr.get(0) + "\nAlpha Binaural : " + gsr.get(1));
+        gsrTxt = ("Avg GSR \nNo Binaural : " + gsr.get(0) + "\n"+binaural+" : " + gsr.get(1));
         gsrText.setText(gsrTxt);
     }
 
@@ -181,7 +184,7 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetY(5d);
 
         Line series2 = cartesian.line(series2Mapping);
-        series2.name(title + " w binaural");
+        series2.name(title + " w "+binaural);
         series2.hovered().markers().enabled(true);
         series2.hovered().markers()
                 .type(MarkerType.CIRCLE)
@@ -278,7 +281,7 @@ public class ResultsActivity extends AppCompatActivity {
         String message = "Your average emotional state during the measurement was : ";
         message+=emoStateMessage;
         if(emoState.get(1)>=0){
-            message+="\n\nYour average emotional state with binaural beats on, was : "+emoStateMessage2;
+            message+="\n\nYour average emotional state with '"+binaural+"' on was : "+emoStateMessage2;
         }
         resultsText.setText(message);
     }
