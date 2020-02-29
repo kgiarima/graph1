@@ -1,7 +1,6 @@
 package com.example.graphtest;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -24,22 +23,14 @@ import com.anychart.enums.MarkerType;
 import com.anychart.enums.TooltipPositionMode;
 import com.anychart.graphics.vector.Stroke;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.text.DecimalFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class ResultsActivity extends AppCompatActivity {
 
@@ -244,7 +235,8 @@ public class ResultsActivity extends AppCompatActivity {
                 fis.close();
             }
 
-            String textToAdd = "\nUser: "+la.getUserName()+" "+la.getUserSurname()+"\n";
+//            String textToAdd = "\nUser: "+la.getUserName()+" "+la.getUserSurname()+" | Sex: "+la.getSex()+" | Age: "+la.getAge()+"\n";
+            String textToAdd = "\n";
             List<String> data = mainData.getData();
             for(int i=0;i<data.size();i++){
                 textToAdd = textToAdd+data.get(i)+"\n";

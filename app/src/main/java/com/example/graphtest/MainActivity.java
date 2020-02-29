@@ -12,8 +12,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.anychart.AnyChart;
@@ -23,8 +21,6 @@ import com.anychart.charts.CircularGauge;
 import com.anychart.enums.Anchor;
 import com.anychart.graphics.vector.text.HAlign;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.analysis.function.Min;
 import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
 import org.apache.commons.math3.stat.descriptive.moment.Skewness;
 
@@ -63,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private static CircularGauge circularGauge;
     private static TextView gsrText;
     private MediaPlayer mp;
-
+    private static LoginActivity la;
     private Handler mainHandler = new Handler();
 
     // weka
@@ -116,10 +112,10 @@ public class MainActivity extends AppCompatActivity {
         startBtn = (Button) findViewById(R.id.startBtn);
         btBtn = (Button) findViewById(R.id.btBtn);
         binBtn = (Button) findViewById(R.id.binBtn);
-
         gsrDot = (Button) findViewById(R.id.gsrDot);
         gsrText = (TextView) findViewById(R.id.gsrTextView);
 
+        la = new LoginActivity();
         anyChartView = findViewById(R.id.any_chart_view);
     }
 
@@ -429,7 +425,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateData(){
-        String s = String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState);
+        String fname = la.getUserName()+" "+la.getUserSurname();
+        String s = String.valueOf(fname)+","+String.valueOf(la.getSex())+","+String.valueOf(la.getAge())+","+String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState);
         data.add(s);
     }
 
@@ -501,7 +498,9 @@ public class MainActivity extends AppCompatActivity {
 
                     if (which== 0)  mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
                     else if(which==1)  mp = MediaPlayer.create(MainActivity.this, R.raw.beta);
-                    else mp = MediaPlayer.create(MainActivity.this, R.raw.alpha);
+                    else if(which==2)  mp = MediaPlayer.create(MainActivity.this, R.raw.gamma);
+                    else if(which==3)  mp = MediaPlayer.create(MainActivity.this, R.raw.theta);
+                    else if(which==4)  mp = MediaPlayer.create(MainActivity.this, R.raw.delta);
 
                     mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         @Override

@@ -4,14 +4,14 @@
     android:orientation="vertical"
     android:layout_width="350dp"
     android:layout_height="600dp"
-    android:background="@color/colorPrimary"
+    android:background="#E187B8A3"
     android:layout_gravity="center"
     android:padding="5dp"
     >
 
     <Button
         android:id="@+id/closeBtn"
-        android:layout_width="47dp"
+        android:layout_width="43dp"
         android:layout_height="43dp"
         android:layout_gravity="end"
         android:background="@drawable/exit2"
