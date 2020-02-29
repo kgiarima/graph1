@@ -36,15 +36,6 @@
                 android:layout_margin="20dp"
                 />
 
-                <Switch
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginLeft="200dp"
-                android:checked="false"
-                android:onClick="changeModel"
-                />
-
                 <TextView
                 android:id="@+id/gsrTextView"
                 android:layout_width="match_parent"

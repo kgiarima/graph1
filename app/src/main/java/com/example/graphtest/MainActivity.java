@@ -46,7 +46,7 @@ import static org.apache.commons.math3.stat.StatUtils.min;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static int emoState, count, statusCheck, model;
+    private static int emoState, count, statusCheck;
     private static double meanGsr,maxGsr,minGsr,rangeGsr,kurtGsr,skewGsr,gsr;
     private static double gsrActive[];
     private static String binaural;
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialize();
-        initializeWeka(model);
+        initializeWeka();
         createChart();
     }
 
@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
         count = 0;
         isRunning = false;
         binauralOn = false;
-        model=0;
         binaural = "No Binaural";
 
         //bluetooth init
@@ -119,15 +118,10 @@ public class MainActivity extends AppCompatActivity {
         anyChartView = findViewById(R.id.any_chart_view);
     }
 
-    private void initializeWeka(int model) {
+    private void initializeWeka() {
         try {
-            if(model==0) {
-                rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion3.model")); // enumerated F_label values
-                src = new DataSource(getAssets().open("traind.arff"));
-            }else {
-                rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion.model"));
-                src = new DataSource(getAssets().open("gsrData.arff"));
-            }
+            rf = (RandomForest) weka.core.SerializationHelper.read(getAssets().open("gsrToEmotion3.model")); // enumerated F_label values
+            src = new DataSource(getAssets().open("traind.arff"));
             ds = src.getDataSet();
             ds.setClassIndex(ds.numAttributes() - 1);
             testInstance = new DenseInstance(7); // mean, max, min, range, kurt, skew, F_Label
@@ -523,16 +517,6 @@ public class MainActivity extends AppCompatActivity {
             builder.show();
         } else {
             pauseBinaural();
-        }
-    }
-
-    public void changeModel(View view){
-        if(model==0){
-            model=1;
-            initializeWeka(model);
-        }else{
-            model=0;
-            initializeWeka(model);
         }
     }
 
