@@ -419,8 +419,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateData(){
-        String fname = la.getUserName()+" "+la.getUserSurname();
-        String s = String.valueOf(fname)+","+String.valueOf(la.getSex())+","+String.valueOf(la.getAge())+","+String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState);
+        String email = la.getEmail();
+        String s = String.valueOf(email)+","+String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState)+","+binaural;
         data.add(s);
     }
 
@@ -523,6 +523,7 @@ public class MainActivity extends AppCompatActivity {
     public void pauseBinaural() {
         if (mp != null) {
             binauralOn = false;
+            binaural = "No binaural";
             binBtn.setActivated(false);
             mp.pause();
             Toast.makeText(this, "Binaural Mode is Off", Toast.LENGTH_SHORT).show();

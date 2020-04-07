@@ -11,21 +11,11 @@
     >
 
     <EditText
-        android:id="@+id/nameTxt"
+        android:id="@+id/emailTxt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="name"
-        android:inputType="textPersonName"
-        android:layout_gravity="center_horizontal"
-        android:gravity="center"/>
-
-    <EditText
-        android:id="@+id/snameTxt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="surname"
+        android:hint="email"
         android:inputType="textPersonName"
         android:layout_gravity="center_horizontal"
         android:gravity="center"/>
@@ -34,27 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:gravity="center">
-
-        <EditText
-            android:id="@+id/sexTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ems="5"
-            android:hint="Sex"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center"/>
-
-        <EditText
-            android:id="@+id/ageTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ems="5"
-            android:hint="Age"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center"/>
-
-    </LinearLayout>
+        android:gravity="center"/>
 
     <Button
         android:id="@+id/loginBtn"
