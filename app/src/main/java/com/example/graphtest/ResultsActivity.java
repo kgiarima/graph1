@@ -37,15 +37,13 @@ public class ResultsActivity extends AppCompatActivity {
     private static Map<Integer, Double> gsr, emoState;
     private static List<Integer> emoStateAll, emoStateAll2; // 2 is for binaural data
     private static List<Double> gsrAll, gsrAll2;
+    private static List<String> data;
     private static Button backBtn, saveDataBtn;
     private static AnyChartView anyChartView;
     private static TextView gsrText, resultsText;
     private static Cartesian cartesian;
-    private static MainActivity mainData;
-    private static String gsrTxt, results;
+    private static String gsrTxt, userMail;
     private static Dialog resultsDialog;
-    private static DatabaseHelper dbHelper;
-    private static LoginActivity la;
     private static final String FNAME = "example.txt";
     private static String binaural;
 
@@ -54,23 +52,29 @@ public class ResultsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
+        Intent intent = getIntent();
+
         backBtn = (Button) findViewById(R.id.backBtn);
         gsrText = (TextView) findViewById(R.id.gsrTextView);
         saveDataBtn = (Button) findViewById(R.id.saveDataBtn);
 
-        mainData = new MainActivity();
-        dbHelper = new DatabaseHelper(this);
+        try {
+            gsr = (HashMap<Integer, Double>) intent.getSerializableExtra("gsrAvg"); //Avg("gsr");
+            emoState = (HashMap<Integer, Double>) intent.getSerializableExtra("emoStateAvg"); //Avg("emo_state");
 
-        gsr = new HashMap<>(mainData.getAvgGsr()); //Avg("gsr");
-        emoState = new HashMap<>(mainData.getAvg()); //Avg("emo_state");
+            emoStateAll = (List<Integer>) intent.getSerializableExtra("emoStateAll");
+            gsrAll = (List<Double>) intent.getSerializableExtra("gsrAll");
 
-        emoStateAll = new ArrayList<>(mainData.getTotal( 0));
-        gsrAll = new ArrayList<>(mainData.getTotalGsr(0));
+            emoStateAll2 = (List<Integer>) intent.getSerializableExtra("emoStateAll2");
+            gsrAll2 = (List<Double>) intent.getSerializableExtra("gsrAll2");
 
-        emoStateAll2 = new ArrayList<>(mainData.getTotal(1));
-        gsrAll2 = new ArrayList<>(mainData.getTotalGsr( 1));
+            data = (List<String>) intent.getSerializableExtra("data");
 
-        binaural = mainData.getBinaural();
+            userMail = intent.getExtras().getString("user");
+            binaural = intent.getExtras().getString("binaural");
+        }catch(Error e){
+            System.out.println("*** Error : "+e);
+        }
 
         setAvgValues();
         anyChartView = findViewById(R.id.any_chart_view);
@@ -111,7 +115,7 @@ public class ResultsActivity extends AppCompatActivity {
 
         cartesian.tooltip().positionMode(TooltipPositionMode.POINT);
         cartesian.title(title + " during the session");
-        cartesian.yAxis(0).title(title);
+        cartesian.yAxis(0).title("Emotional State | GSR Level");
         cartesian.xAxis(0).title("Input");
         cartesian.xAxis(0).labels().padding(5d, 5d, 5d, 5d);
 
@@ -160,7 +164,6 @@ public class ResultsActivity extends AppCompatActivity {
         set.data(seriesData);
         Mapping series1Mapping = set.mapAs("{ x: 'x', value: 'value' }");
         Mapping series2Mapping = set.mapAs("{ x: 'x', value: 'value2' }");
-//        Mapping series3Mapping = set.mapAs("{ x: 'x', value: 'value3' }");
 
         Line series1 = cartesian.line(series1Mapping);
         series1.name(title + " w/o binaural");
@@ -174,29 +177,19 @@ public class ResultsActivity extends AppCompatActivity {
                 .offsetX(5d)
                 .offsetY(5d);
 
-        Line series2 = cartesian.line(series2Mapping);
-        series2.name(title + " w "+binaural);
-        series2.hovered().markers().enabled(true);
-        series2.hovered().markers()
-                .type(MarkerType.CIRCLE)
-                .size(4d);
-        series2.tooltip()
-                .position("right")
-                .anchor(Anchor.LEFT_CENTER)
-                .offsetX(5d)
-                .offsetY(5d);
-
-//        Line series3 = cartesian.line(series3Mapping);
-//        series3.name("Tequila");
-//        series3.hovered().markers().enabled(true);
-//        series3.hovered().markers()
-//                .type(MarkerType.CIRCLE)
-//                .size(4d);
-//        series3.tooltip()
-//                .position("right")
-//                .anchor(Anchor.LEFT_CENTER)
-//                .offsetX(5d)
-//                .offsetY(5d);
+        if(graph2.size()>0) {
+            Line series2 = cartesian.line(series2Mapping);
+            series2.name(title + " w " + binaural);
+            series2.hovered().markers().enabled(true);
+            series2.hovered().markers()
+                    .type(MarkerType.CIRCLE)
+                    .size(4d);
+            series2.tooltip()
+                    .position("right")
+                    .anchor(Anchor.LEFT_CENTER)
+                    .offsetX(5d)
+                    .offsetY(5d);
+        }
 
         cartesian.legend().enabled(true);
         cartesian.legend().fontSize(13d);
@@ -207,20 +200,12 @@ public class ResultsActivity extends AppCompatActivity {
 
     public void goBack(View view) {
         finish();
-        startActivity(new Intent(ResultsActivity.this, MainActivity.class));
+        Intent intent = new Intent(ResultsActivity.this, MainActivity.class);
+        intent.putExtra("user",userMail);
+        startActivity(intent);
     }
 
     public void saveData(View view) {
-//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-//        LocalDateTime now = LocalDateTime.now();
-//        String[] data = {dtf.format(now), getUser(), gsr.get(0).toString(), gsr.get(1).toString(), emoState.get(0).toString(), emoState.get(1).toString()};
-//        boolean insertData = dbHelper.addData(data);
-//        if (insertData) {
-//            Toast.makeText(this, "Data successfully stored", Toast.LENGTH_SHORT).show();
-//        } else {
-//            Toast.makeText(this, "Data could not be stored", Toast.LENGTH_SHORT).show();
-//        }
-        la = new LoginActivity();
 
         try{
             FileInputStream fis = openFileInput(FNAME);
@@ -235,13 +220,10 @@ public class ResultsActivity extends AppCompatActivity {
                 fis.close();
             }
 
-//            String textToAdd = "\nUser: "+la.getUserName()+" "+la.getUserSurname()+" | Sex: "+la.getSex()+" | Age: "+la.getAge()+"\n";
             String textToAdd = "\n";
-            List<String> data = mainData.getData();
             for(int i=0;i<data.size();i++){
                 textToAdd = textToAdd+data.get(i)+"\n";
             }
-
 
             FileOutputStream fos = openFileOutput(FNAME, MODE_PRIVATE);
             fos.write((sb.toString().concat(textToAdd)).getBytes());
@@ -254,13 +236,6 @@ public class ResultsActivity extends AppCompatActivity {
         }
     }
 
-//    public class CustomDataEntry extends ValueDataEntry {
-//        CustomDataEntry(String x, Number value) {
-//
-//            super(x, value);
-//        }
-//    }
-
     public void showGsr(View view) {
         anyChartView.clear();
         setGraph(1);
@@ -270,10 +245,9 @@ public class ResultsActivity extends AppCompatActivity {
         resultsText = (TextView) resultsDialog.findViewById(R.id.resultsText);
         String emoStateMessage = getResultsMessage((int) Math.round(emoState.get(0)));
         String emoStateMessage2 = getResultsMessage((int) Math.round(emoState.get(1)));
-        String message = "Your average emotional state during the measurement was : ";
-        message+=emoStateMessage;
+        String message = "Your average emotional state during the measurement was : '"+emoStateMessage+"' ("+emoState.get(0)+")";;
         if(emoState.get(1)>=0){
-            message+="\n\nYour average emotional state with '"+binaural+"' on was : "+emoStateMessage2;
+            message+="\n\nYour average emotional state with '"+binaural+"' on was : '"+emoStateMessage2+"' ("+emoState.get(1)+")";
         }
         resultsText.setText(message);
     }

@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private static int emoState, count, statusCheck;
     private static double meanGsr,maxGsr,minGsr,rangeGsr,kurtGsr,skewGsr,gsr;
     private static double gsrActive[];
-    private static String binaural;
+    private static String binaural,email;
     private static List<Integer> emoStateTotal, emoStateTotal2;
     private static List<Double> gsrTotal, gsrTotal2;
     private static List<String> data;
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private static CircularGauge circularGauge;
     private static TextView gsrText;
     private MediaPlayer mp;
-    private static LoginActivity la;
     private Handler mainHandler = new Handler();
 
     // weka
@@ -90,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void initialize() {
 
+        Intent intent = getIntent();
+        email = intent.getExtras().getString("user");
+
         count = 0;
         isRunning = false;
         binauralOn = false;
@@ -113,8 +116,6 @@ public class MainActivity extends AppCompatActivity {
         binBtn = (Button) findViewById(R.id.binBtn);
         gsrDot = (Button) findViewById(R.id.gsrDot);
         gsrText = (TextView) findViewById(R.id.gsrTextView);
-
-        la = new LoginActivity();
         anyChartView = findViewById(R.id.any_chart_view);
     }
 
@@ -240,12 +241,6 @@ public class MainActivity extends AppCompatActivity {
 
     private int predict() {
         try {
-//            testInstance.setValue(ds.attribute("mean"), meanGsr);
-//            testInstance.setValue(ds.attribute("max"), maxGsr);
-//            testInstance.setValue(ds.attribute("min"), minGsr);
-//            testInstance.setValue(ds.attribute("range"), rangeGsr);
-//            testInstance.setValue(ds.attribute("kurt"), kurtGsr);
-//            testInstance.setValue(ds.attribute("skew"), skewGsr);
             testInstance.setValue(ds.attribute("MEAN"), meanGsr);
             testInstance.setValue(ds.attribute("MAXF"), maxGsr);
             testInstance.setValue(ds.attribute("MINF"), minGsr);
@@ -253,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
             testInstance.setValue(ds.attribute("KURT"), kurtGsr);
             testInstance.setValue(ds.attribute("SKEW"), skewGsr);
 
-            System.out.println("*****The instance: " + testInstance);
             emoStatePredict = (int) rf.classifyInstance(testInstance);
             System.out.println(emoStatePredict);
 
@@ -341,7 +335,17 @@ public class MainActivity extends AppCompatActivity {
             }
 
             finish();
-            startActivity(new Intent(MainActivity.this, ResultsActivity.class));
+            Intent intent = new Intent(MainActivity.this, ResultsActivity.class);
+            intent.putExtra("binaural", getBinaural());
+            intent.putExtra("user", email);
+            intent.putExtra("data", (Serializable) getData());
+            intent.putExtra("emoStateAvg", (Serializable) getAvg());
+            intent.putExtra("gsrAvg", (Serializable) getAvgGsr());
+            intent.putExtra("emoStateAll", (Serializable) getTotal(0));
+            intent.putExtra("gsrAll", (Serializable) getTotalGsr(0));
+            intent.putExtra("emoStateAll2", (Serializable) getTotal(1));
+            intent.putExtra("gsrAll2", (Serializable) getTotalGsr(1));
+            startActivity(intent);
         }
     }
 
@@ -419,8 +423,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateData(){
-        String email = la.getEmail();
-        String s = String.valueOf(email)+","+String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState)+","+binaural;
+        String s = String.valueOf(email)+","+String.valueOf(meanGsr)+","+String.valueOf(minGsr)+","+String.valueOf(maxGsr)+","+
+                String.valueOf(rangeGsr)+","+String.valueOf(kurtGsr)+","+String.valueOf(skewGsr)+","+String.valueOf(emoState)+","+binaural;
         data.add(s);
     }
 
@@ -465,14 +469,13 @@ public class MainActivity extends AppCompatActivity {
     public int checkHealthStatus(String status) {
         setDots(true);
 
-            if (status.equals("M") && gsr>0 && gsr<20) {
-                setDots(true);
-                return 0;
-            } else {
-                setDots(false);
-                return 1;
-            }
-
+        if (status.equals("M") && gsr>0 && gsr<20) {
+            setDots(true);
+            return 0;
+        } else {
+            setDots(false);
+            return 1;
+        }
     }
 
     public void addBinaural(View view) {
@@ -532,7 +535,7 @@ public class MainActivity extends AppCompatActivity {
 
     public List<Integer> getTotal(int b) {
         if (b == 0) {
-             return emoStateTotal;
+            return emoStateTotal;
         } else {
             return emoStateTotal2;
         }

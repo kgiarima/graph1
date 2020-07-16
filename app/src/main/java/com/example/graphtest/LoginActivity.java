@@ -24,8 +24,10 @@ public class LoginActivity extends AppCompatActivity {
     public void login(View view) {
 
         this.email = emailTxt.getText().toString();
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-  }
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra("user", email);
+        startActivity(intent);
+    }
 
     public String getEmail(){
         return email;

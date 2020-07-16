@@ -103,6 +103,7 @@
             android:textSize="20sp"
             android:text="Start"
             android:onClick="start"
+            style="?android:attr/borderlessButtonStyle"
             />
 
         <Button
