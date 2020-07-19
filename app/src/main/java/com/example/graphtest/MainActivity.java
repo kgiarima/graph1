@@ -23,12 +23,14 @@ import com.anychart.graphics.vector.text.HAlign;
 
 import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
 import org.apache.commons.math3.stat.descriptive.moment.Skewness;
+import org.apache.commons.math3.util.Precision;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +43,7 @@ import weka.core.Instances;
 import weka.core.Instance;
 import weka.core.converters.ConverterUtils.DataSource;
 
+import static java.lang.Math.round;
 import static org.apache.commons.math3.stat.StatUtils.max;
 import static org.apache.commons.math3.stat.StatUtils.mean;
 import static org.apache.commons.math3.stat.StatUtils.min;
@@ -432,7 +435,7 @@ public class MainActivity extends AppCompatActivity {
         return data;
     }
 
-    // choice = 0 means that both gsr and emo_state should be added ti the total Lists. If choice = 1 only gsr should be added to the total List
+    // choice = 0 means that emo_state should be added to the total Lists. If choice = 1 gsr should be added to the total List
     public void updateValues( ) {
 
         if (binauralOn) {
@@ -520,13 +523,13 @@ public class MainActivity extends AppCompatActivity {
             builder.show();
         } else {
             pauseBinaural();
+            binaural = "No binaural";
         }
     }
 
     public void pauseBinaural() {
         if (mp != null) {
             binauralOn = false;
-            binaural = "No binaural";
             binBtn.setActivated(false);
             mp.pause();
             Toast.makeText(this, "Binaural Mode is Off", Toast.LENGTH_SHORT).show();
@@ -567,14 +570,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (set1.size() > 0) {
-            double mo = sum1 / set1.size();
+            double mo = Precision.round(sum1 / Double.valueOf(set1.size()),2);
             map.put(0, mo);
         } else {
             map.put(0, -1.0);
         }
 
         if (set2.size() > 0) {
-            double mo = sum2 / set2.size();
+            double mo = Precision.round(sum2 / Double.valueOf(set2.size()),2);
             map.put(1, mo);
         } else {
             map.put(1, -1.0);
@@ -601,14 +604,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (set1.size() > 0) {
-            double mo = sum1 / set1.size();
+            double mo = sum1 / Double.valueOf(set1.size());
             map.put(0, mo);
         } else {
             map.put(0, 0.0);
         }
 
         if (set2.size() > 0) {
-            double mo = sum2 / set2.size();
+            double mo = sum2 / Double.valueOf(set2.size());
             map.put(1, mo);
         } else {
             map.put(1, 0.0);

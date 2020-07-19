@@ -34,6 +34,7 @@
                 android:layout_height="20dp"
                 android:layout_weight="1"
                 android:layout_margin="20dp"
+                style="?android:attr/borderlessButtonStyle"
                 />
 
                 <TextView
@@ -44,6 +45,7 @@
                 android:textSize="20sp"
                 android:text="GSR"
                 android:gravity="center"
+                style="?android:attr/borderlessButtonStyle"
                 />
 
             </RelativeLayout>
@@ -60,6 +62,7 @@
                     android:layout_height="200dp"
                     android:layout_weight="1"
                     android:layout_margin="10dp"
+                    style="?android:attr/borderlessButtonStyle"
                     />
 
             </RelativeLayout>
@@ -81,8 +84,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.2"
-        android:orientation="horizontal"
-        >
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/binBtn"
@@ -92,7 +94,7 @@
             android:layout_weight="1.2"
             android:layout_margin="7dp"
             android:onClick="addBinaural"
-            />
+            style="?android:attr/borderlessButtonStyle"/>
 
         <Button
             android:id="@+id/startBtn"
@@ -103,8 +105,7 @@
             android:textSize="20sp"
             android:text="Start"
             android:onClick="start"
-            style="?android:attr/borderlessButtonStyle"
-            />
+            style="?android:attr/borderlessButtonStyle"/>
 
         <Button
             android:id="@+id/btBtn"
@@ -114,9 +115,8 @@
             android:layout_weight="1.2"
             android:layout_margin="7dp"
             android:onClick="btCheck"
-            />
+            style="?android:attr/borderlessButtonStyle"/>
 
     </LinearLayout>
-
 
 </LinearLayout>
