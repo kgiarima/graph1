@@ -11,7 +11,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2"
+        android:layout_weight="1"
         android:orientation="vertical"
         >
 
@@ -27,52 +27,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:textSize="20sp"
+                android:textSize="15sp"
                 android:text="GSR"
                 android:gravity="center"
+                android:layout_margin="4dp"
                 android:onClick="showGsr"
-                />
-
-            <TextView
-                android:id="@+id/sktTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="SKT"
-                android:gravity="center"
-                android:onClick="showSkt"
-                />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_weight="1"
-            >
-
-            <TextView
-                android:id="@+id/hrTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="HR"
-                android:gravity="center"
-                android:onClick="showHr"
-                />
-
-            <TextView
-                android:id="@+id/hrvTextView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textSize="20sp"
-                android:text="HRV"
-                android:gravity="center"
-                android:onClick="showHrv"
                 />
 
         </LinearLayout>
@@ -89,39 +48,41 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="0.9"
         android:orientation="horizontal"
         >
 
         <Button
             android:id="@+id/backBtn"
-            android:background="@drawable/arrow"
+            android:background="@drawable/arrow2"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="10dp"
             android:onClick="goBack"
+            style="?android:attr/borderlessButtonStyle"
             />
 
         <Button
-            android:id="@+id/startBtn"
+            android:id="@+id/saveDataBtn"
+            android:background="@drawable/save_data"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:layout_margin="15dp"
-            android:textSize="20sp"
-            android:text="Start"
-            android:visibility="invisible"
+            android:layout_weight="2"
+            android:layout_margin="10dp"
+            android:onClick="saveData"
+            style="?android:attr/borderlessButtonStyle"
             />
 
         <Button
-            android:id="@+id/btBtn"
-            android:background="@drawable/bluetooth_icon_off"
+            android:id="@+id/infoBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_margin="5dp"
-            android:visibility="invisible"
+            android:background="@drawable/info"
+            android:onClick="showResults"
+            style="?android:attr/borderlessButtonStyle"
             />
 
     </LinearLayout>
